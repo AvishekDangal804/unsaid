@@ -130,8 +130,15 @@ export function MessageThread({
       const result = await sendMessage(conversationId, trimmed);
       if ("error" in result) {
         setMessages((prev) => prev.filter((m) => m.id !== optimistic.id));
-      } else if (status === "pending" && !isInitiator) {
-        setStatus("accepted");
+      } else {
+        if (result.message) {
+          setMessages((prev) =>
+            prev.map((m) => (m.id === optimistic.id ? result.message! : m)),
+          );
+        }
+        if (status === "pending" && !isInitiator) {
+          setStatus("accepted");
+        }
       }
     });
   }

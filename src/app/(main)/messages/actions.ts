@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { notify } from "@/lib/notify";
+import type { Message } from "@/types/database.types";
 
 export type ActionResult = { error: string } | { success: true };
 
@@ -42,7 +43,10 @@ export async function startConversationAndRedirect(targetId: string) {
   return result;
 }
 
-export async function sendMessage(conversationId: string, content: string): Promise<ActionResult> {
+export async function sendMessage(
+  conversationId: string,
+  content: string,
+): Promise<ActionResult & { message?: Message }> {
   const { supabase, user } = await requireUser();
   if (!user) return { error: "You need to log in first" };
 
@@ -58,13 +62,17 @@ export async function sendMessage(conversationId: string, content: string): Prom
 
   if (!conversation) return { error: "Conversation not found" };
 
-  const { error } = await supabase.from("messages").insert({
-    conversation_id: conversationId,
-    sender_id: user.id,
-    content: trimmed,
-  });
+  const { data: message, error } = await supabase
+    .from("messages")
+    .insert({
+      conversation_id: conversationId,
+      sender_id: user.id,
+      content: trimmed,
+    })
+    .select()
+    .single();
 
-  if (error) return { error: "Message couldn't be sent. You may have been blocked." };
+  if (error || !message) return { error: "Message couldn't be sent. You may have been blocked." };
 
   // Replying to a pending request implicitly accepts it.
   if (conversation.status === "pending" && conversation.initiator_id !== user.id) {
@@ -80,7 +88,7 @@ export async function sendMessage(conversationId: string, content: string): Prom
   });
 
   revalidatePath(`/messages/${conversationId}`);
-  return { success: true };
+  return { success: true, message };
 }
 
 export async function acceptConversation(conversationId: string): Promise<ActionResult> {
