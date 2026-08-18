@@ -8,22 +8,11 @@ import { ReactionBar } from "./reaction-bar";
 import { PollDisplay } from "./poll-display";
 import { PostImageGrid } from "./post-image-grid";
 import { PostMenu } from "./post-menu";
+import { PostContent } from "./post-content";
 import { toggleRepost } from "@/app/(main)/post-actions";
 import { cn } from "@/lib/utils";
+import { MOOD_META } from "@/lib/moods";
 import type { FeedPost } from "@/lib/data/posts";
-
-const MOOD_EMOJI: Record<string, string> = {
-  love: "❤️",
-  heartbroken: "💔",
-  sad: "😔",
-  funny: "😂",
-  angry: "😡",
-  support: "🫂",
-  calm: "😌",
-  motivated: "🔥",
-  confused: "😶",
-  happy: "🎉",
-};
 
 const TYPE_LABEL: Record<string, string> = {
   post: "",
@@ -99,7 +88,7 @@ export function PostCard({ post, currentUserId }: { post: FeedPost; currentUserI
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
               <span>{timeAgo(post.createdAt)}</span>
               {TYPE_LABEL[post.type] && <span>· {TYPE_LABEL[post.type]}</span>}
-              {post.mood && <span>{MOOD_EMOJI[post.mood]}</span>}
+              {post.mood && <span>{MOOD_META[post.mood].emoji}</span>}
             </div>
           </div>
         </div>
@@ -124,14 +113,10 @@ export function PostCard({ post, currentUserId }: { post: FeedPost; currentUserI
         ) : (
           <>
             {post.content && (
-              <p
-                className={cn(
-                  "whitespace-pre-wrap text-foreground",
-                  post.type === "story" ? "text-sm leading-relaxed" : "text-[15px]",
-                )}
-              >
-                {post.content}
-              </p>
+              <PostContent
+                content={post.content}
+                className={post.type === "story" ? "text-sm leading-relaxed" : "text-[15px]"}
+              />
             )}
 
             {post.categoryLabel && (

@@ -54,7 +54,7 @@ function maskAuthor(
   };
 }
 
-async function enrichPosts(
+export async function enrichPosts(
   page: Post[],
   userId: string | null,
   supabase: SupabaseServerClient,
@@ -223,8 +223,15 @@ export async function getFeedPosts(options: {
   userId: string | null;
   cursor?: string;
   limit?: number;
+  filter?: {
+    categoryId?: string;
+    mood?: Mood;
+    communityId?: string;
+    dailyQuestionId?: string;
+    hashtag?: string;
+  };
 }): Promise<{ posts: FeedPost[]; nextCursor: string | null }> {
-  const { scope, userId, cursor, limit = 10 } = options;
+  const { scope, userId, cursor, limit = 10, filter } = options;
   const supabase = await createClient();
 
   let query = supabase
@@ -256,6 +263,27 @@ export async function getFeedPosts(options: {
     }
   }
 
+  if (filter?.categoryId) query = query.eq("category_id", filter.categoryId);
+  if (filter?.mood) query = query.eq("mood", filter.mood);
+  if (filter?.communityId) query = query.eq("community_id", filter.communityId);
+  if (filter?.dailyQuestionId) query = query.eq("daily_question_id", filter.dailyQuestionId);
+
+  if (filter?.hashtag) {
+    const { data: hashtagRow } = await supabase
+      .from("hashtags")
+      .select("id")
+      .ilike("name", filter.hashtag)
+      .maybeSingle();
+    if (!hashtagRow) return { posts: [], nextCursor: null };
+    const { data: tagged } = await supabase
+      .from("post_hashtags")
+      .select("post_id")
+      .eq("hashtag_id", hashtagRow.id);
+    const taggedIds = (tagged ?? []).map((t) => t.post_id);
+    if (taggedIds.length === 0) return { posts: [], nextCursor: null };
+    query = query.in("id", taggedIds);
+  }
+
   const { data: rawPosts } = await query;
   if (!rawPosts || rawPosts.length === 0) return { posts: [], nextCursor: null };
 
@@ -265,6 +293,80 @@ export async function getFeedPosts(options: {
 
   const posts = await enrichPosts(page, userId, supabase);
   return { posts, nextCursor };
+}
+
+// Recency-weighted engagement, capped at 2 posts per author so one viral
+// post (or one prolific author) can't dominate the whole list.
+export async function getTrendingPosts(userId: string | null, limit = 20): Promise<FeedPost[]> {
+  const supabase = await createClient();
+  const since = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString();
+
+  const { data: rawPosts } = await supabase
+    .from("posts")
+    .select("*")
+    .gte("created_at", since)
+    .order("created_at", { ascending: false })
+    .limit(200);
+
+  if (!rawPosts || rawPosts.length === 0) return [];
+
+  const enriched = await enrichPosts(rawPosts, userId, supabase);
+
+  const scored = enriched
+    .map((post) => {
+      const reactionTotal = Object.values(post.reactionCounts).reduce((sum, n) => sum + (n ?? 0), 0);
+      const ageHours = (Date.now() - new Date(post.createdAt).getTime()) / 3_600_000;
+      const score = (reactionTotal + post.commentCount * 2 + post.repostCount * 1.5) / Math.pow(ageHours + 2, 1.3);
+      return { post, score };
+    })
+    .sort((a, b) => b.score - a.score);
+
+  const perAuthorCount = new Map<string, number>();
+  const result: FeedPost[] = [];
+
+  for (const { post } of scored) {
+    const authorKey = post.author?.id ?? post.id;
+    const count = perAuthorCount.get(authorKey) ?? 0;
+    if (count >= 2) continue;
+    perAuthorCount.set(authorKey, count + 1);
+    result.push(post);
+    if (result.length >= limit) break;
+  }
+
+  return result;
+}
+
+export async function getTrendingHashtags(limit = 10): Promise<{ name: string; count: number }[]> {
+  const supabase = await createClient();
+  const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+
+  const { data: recentPosts } = await supabase.from("posts").select("id").gte("created_at", since);
+  if (!recentPosts || recentPosts.length === 0) return [];
+
+  const { data: tags } = await supabase
+    .from("post_hashtags")
+    .select("hashtag_id")
+    .in("post_id", recentPosts.map((p) => p.id));
+  if (!tags || tags.length === 0) return [];
+
+  const countByHashtag = new Map<string, number>();
+  for (const t of tags) {
+    countByHashtag.set(t.hashtag_id, (countByHashtag.get(t.hashtag_id) ?? 0) + 1);
+  }
+
+  const topIds = Array.from(countByHashtag.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, limit)
+    .map(([id]) => id);
+
+  const { data: hashtagRows } = await supabase.from("hashtags").select("id, name").in("id", topIds);
+
+  return topIds
+    .map((id) => {
+      const row = hashtagRows?.find((h) => h.id === id);
+      return row ? { name: row.name, count: countByHashtag.get(id) ?? 0 } : null;
+    })
+    .filter((x): x is { name: string; count: number } => x !== null);
 }
 
 export async function getSinglePost(postId: string, userId: string | null): Promise<FeedPost | null> {

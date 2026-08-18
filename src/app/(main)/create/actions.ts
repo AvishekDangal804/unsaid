@@ -38,6 +38,8 @@ export async function createPost(formData: FormData): Promise<ActionResult> {
   }
 
   const data = parsed.data;
+  const communityId = (formData.get("communityId") as string) || null;
+  const dailyQuestionId = (formData.get("dailyQuestionId") as string) || null;
 
   const { data: post, error } = await supabase
     .from("posts")
@@ -50,12 +52,18 @@ export async function createPost(formData: FormData): Promise<ActionResult> {
       is_anonymous: data.isAnonymous,
       comments_enabled: data.commentsEnabled,
       content_warning: data.contentWarning || null,
+      community_id: communityId,
+      daily_question_id: dailyQuestionId,
     })
     .select("id")
     .single();
 
   if (error || !post) {
-    return { error: "Something went wrong posting that. Try again." };
+    return {
+      error: communityId
+        ? "Couldn't post there — you may need to join the community first."
+        : "Something went wrong posting that. Try again.",
+    };
   }
 
   if (data.type === "poll" && data.pollOptions) {

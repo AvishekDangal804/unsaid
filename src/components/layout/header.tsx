@@ -6,7 +6,7 @@ import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { CreatePostMenu } from "@/components/shared/create-post-menu";
 import { Avatar } from "@/components/ui/avatar";
 import { buttonVariants } from "@/components/ui/button";
-import { Bookmark } from "lucide-react";
+import { Bookmark, Compass, Search } from "lucide-react";
 import { LogoutButton } from "./logout-button";
 
 export function HeaderSkeleton() {
@@ -38,15 +38,39 @@ export async function Header() {
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-background/90 backdrop-blur">
       <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
-        <Link href="/" className="text-lg font-semibold tracking-tight text-foreground">
-          UNSAID
-        </Link>
+        <div className="flex items-center gap-4">
+          <Link href="/" className="text-lg font-semibold tracking-tight text-foreground">
+            UNSAID
+          </Link>
+          <Link
+            href="/explore"
+            className="hidden text-sm font-medium text-muted-foreground hover:text-foreground sm:inline"
+          >
+            Explore
+          </Link>
+        </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
+          <Link
+            href="/search"
+            className="flex size-9 items-center justify-center rounded-full text-muted-foreground hover:bg-surface-muted sm:hidden"
+            aria-label="Search"
+          >
+            <Search className="size-4" />
+          </Link>
+          <Link
+            href="/explore"
+            className="flex size-9 items-center justify-center rounded-full text-muted-foreground hover:bg-surface-muted sm:hidden"
+            aria-label="Explore"
+          >
+            <Compass className="size-4" />
+          </Link>
           <ThemeToggle />
           {user && profile ? (
             <>
-              <CreatePostMenu />
+              <div className="hidden sm:block">
+                <CreatePostMenu />
+              </div>
               <Link
                 href="/saved"
                 className="hidden size-9 items-center justify-center rounded-full text-muted-foreground hover:bg-surface-muted sm:flex"
@@ -64,18 +88,18 @@ export async function Header() {
               )}
               <Link
                 href={`/${profile.username}`}
-                className="flex items-center gap-2 rounded-full pl-1 pr-3 py-1 hover:bg-surface-muted"
+                className="hidden items-center gap-2 rounded-full pl-1 pr-3 py-1 hover:bg-surface-muted sm:flex"
               >
                 <Avatar
                   src={profile.avatar_url}
                   name={profile.display_name ?? profile.username}
                   size={28}
                 />
-                <span className="hidden text-sm text-foreground sm:inline">
-                  @{profile.username}
-                </span>
+                <span className="text-sm text-foreground">@{profile.username}</span>
               </Link>
-              <LogoutButton />
+              <div className="hidden sm:block">
+                <LogoutButton />
+              </div>
             </>
           ) : (
             <>

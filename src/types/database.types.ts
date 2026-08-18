@@ -155,6 +155,8 @@ export type Database = {
           is_anonymous: boolean;
           comments_enabled: boolean;
           content_warning: string | null;
+          community_id: string | null;
+          daily_question_id: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -168,6 +170,8 @@ export type Database = {
           is_anonymous?: boolean;
           comments_enabled?: boolean;
           content_warning?: string | null;
+          community_id?: string | null;
+          daily_question_id?: string | null;
         };
         Update: {
           content?: string | null;
@@ -302,6 +306,36 @@ export type Database = {
         Update: Record<string, never>;
         Relationships: [];
       };
+      communities: {
+        Row: {
+          id: string;
+          slug: string;
+          name: string;
+          description: string | null;
+          emoji: string;
+          created_at: string;
+        };
+        Insert: { slug: string; name: string; description?: string | null; emoji?: string };
+        Update: { name?: string; description?: string | null; emoji?: string };
+        Relationships: [];
+      };
+      community_members: {
+        Row: {
+          community_id: string;
+          user_id: string;
+          role: "member" | "moderator";
+          joined_at: string;
+        };
+        Insert: { community_id: string; user_id: string };
+        Update: { role?: "member" | "moderator" };
+        Relationships: [];
+      };
+      daily_questions: {
+        Row: { id: string; question_text: string; created_at: string };
+        Insert: { question_text: string };
+        Update: { question_text?: string };
+        Relationships: [];
+      };
     };
     Views: {
       posts_public: {
@@ -362,3 +396,6 @@ export type PollOption = Database["public"]["Tables"]["poll_options"]["Row"];
 export type Reaction = Database["public"]["Tables"]["reactions"]["Row"];
 export type Institution = Database["public"]["Tables"]["institutions"]["Row"];
 export type Repost = Database["public"]["Tables"]["reposts"]["Row"];
+export type Community = Database["public"]["Tables"]["communities"]["Row"];
+export type CommunityMember = Database["public"]["Tables"]["community_members"]["Row"];
+export type DailyQuestion = Database["public"]["Tables"]["daily_questions"]["Row"];

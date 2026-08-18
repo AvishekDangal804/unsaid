@@ -4,6 +4,7 @@ import { GraduationCap } from "lucide-react";
 import { getCurrentUser } from "@/lib/supabase/get-user";
 import { getProfileById } from "@/lib/data/profile";
 import { AvatarUploader } from "@/components/shared/avatar-uploader";
+import { LogoutButton } from "@/components/layout/logout-button";
 import { ProfileEditForm } from "./profile-edit-form";
 
 export default async function EditProfilePage() {
@@ -43,6 +44,10 @@ export default async function EditProfilePage() {
         <GraduationCap className="size-4 text-primary" />
         Edit country, education, or school
       </Link>
+
+      <div className="mt-6 flex justify-end sm:hidden">
+        <LogoutButton />
+      </div>
     </div>
   );
 }

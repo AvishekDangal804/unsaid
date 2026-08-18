@@ -7,7 +7,7 @@ import { PostMediaUploader } from "@/components/shared/post-media-uploader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { MOODS } from "@/lib/validation/post";
+import { MOOD_META, MOOD_ORDER } from "@/lib/moods";
 import type { Category, PostType } from "@/types/database.types";
 import { Plus, X } from "lucide-react";
 
@@ -20,27 +20,18 @@ const TYPE_META: Record<PostType, { label: string; emoji: string; placeholder: s
   question: { label: "Question", emoji: "❓", placeholder: "What do you want to ask?" },
 };
 
-const MOOD_EMOJI: Record<string, string> = {
-  love: "❤️ In Love",
-  heartbroken: "💔 Heartbroken",
-  sad: "😔 Sad",
-  funny: "😂 Funny",
-  angry: "😡 Angry",
-  support: "🫂 Need Support",
-  calm: "😌 Calm",
-  motivated: "🔥 Motivated",
-  confused: "😶 Confused",
-  happy: "🎉 Happy",
-};
-
 export function CreateForm({
   initialType,
   categories,
   userId,
+  community,
+  dailyQuestion,
 }: {
   initialType: PostType;
   categories: Category[];
   userId: string;
+  community?: { id: string; name: string; slug: string } | null;
+  dailyQuestion?: { id: string; question_text: string } | null;
 }) {
   const router = useRouter();
   const [type, setType] = useState<PostType>(initialType);
@@ -56,6 +47,8 @@ export function CreateForm({
   function handleSubmit(formData: FormData) {
     setError(null);
     formData.set("type", type);
+    if (community) formData.set("communityId", community.id);
+    if (dailyQuestion) formData.set("dailyQuestionId", dailyQuestion.id);
     mediaUrls.forEach((url) => formData.append("mediaUrls", url));
     if (type === "poll") {
       pollOptions.filter((o) => o.trim()).forEach((o) => formData.append("pollOptions", o));
@@ -74,6 +67,18 @@ export function CreateForm({
 
   return (
     <form action={handleSubmit} className="flex flex-col gap-4" noValidate>
+      {community && (
+        <div className="rounded-xl border border-primary/30 bg-primary/5 px-4 py-2 text-sm text-primary">
+          Posting in <strong>{community.name}</strong>
+        </div>
+      )}
+
+      {dailyQuestion && (
+        <div className="rounded-xl border border-primary/30 bg-primary/5 px-4 py-2 text-sm text-primary">
+          Answering: <strong>{dailyQuestion.question_text}</strong>
+        </div>
+      )}
+
       <div className="flex flex-wrap gap-2">
         {(Object.keys(TYPE_META) as PostType[]).map((t) => (
           <button
@@ -171,9 +176,9 @@ export function CreateForm({
             className="h-11 w-full rounded-xl border border-border bg-surface px-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <option value="">None</option>
-            {MOODS.map((m) => (
+            {MOOD_ORDER.map((m) => (
               <option key={m} value={m}>
-                {MOOD_EMOJI[m]}
+                {MOOD_META[m].emoji} {MOOD_META[m].label}
               </option>
             ))}
           </select>
