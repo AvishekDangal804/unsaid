@@ -1,21 +1,27 @@
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { getCurrentUser } from "@/lib/supabase/get-user";
+import { getProfileById } from "@/lib/data/profile";
 import { buttonVariants } from "@/components/ui/button";
+import { CompleteProfileBanner } from "@/components/shared/complete-profile-banner";
 
 export default async function HomePage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
 
   if (user) {
+    const profile = await getProfileById(user.id);
+    const profileIncomplete =
+      profile && !profile.display_name && !profile.bio && !profile.avatar_url;
+
     return (
-      <div className="flex flex-1 flex-col items-center justify-center gap-2 py-24 text-center">
-        <h1 className="text-xl font-semibold text-foreground">You&apos;re all caught up.</h1>
-        <p className="max-w-sm text-sm text-muted-foreground">
-          Your feed is coming soon — this is where confessions, stories, and thoughts from
-          people you follow will show up.
-        </p>
+      <div>
+        {profileIncomplete && <CompleteProfileBanner userId={user.id} />}
+        <div className="flex flex-1 flex-col items-center justify-center gap-2 py-24 text-center">
+          <h1 className="text-xl font-semibold text-foreground">You&apos;re all caught up.</h1>
+          <p className="max-w-sm text-sm text-muted-foreground">
+            Your feed is coming soon — this is where confessions, stories, and thoughts from
+            people you follow will show up.
+          </p>
+        </div>
       </div>
     );
   }

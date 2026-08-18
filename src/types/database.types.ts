@@ -1,4 +1,5 @@
-// Hand-written to match supabase/migrations/20260818000001_init_profiles.sql.
+// Hand-written to match supabase/migrations/20260818000001_init_profiles.sql
+// and 20260818000002_follows_and_avatars.sql.
 // Once the Supabase CLI is linked to the project, regenerate with:
 //   npx supabase gen types typescript --linked > src/types/database.types.ts
 
@@ -56,6 +57,22 @@ export type Database = {
         Update: { username?: string };
         Relationships: [];
       };
+      follows: {
+        Row: {
+          follower_id: string;
+          following_id: string;
+          status: "accepted" | "pending";
+          created_at: string;
+        };
+        Insert: {
+          follower_id: string;
+          following_id: string;
+        };
+        Update: {
+          status?: "accepted" | "pending";
+        };
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
@@ -65,3 +82,4 @@ export type Database = {
 };
 
 export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
+export type Follow = Database["public"]["Tables"]["follows"]["Row"];

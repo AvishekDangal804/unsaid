@@ -1,23 +1,36 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { getCurrentUser } from "@/lib/supabase/get-user";
+import { getProfileById } from "@/lib/data/profile";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
+import { Avatar } from "@/components/ui/avatar";
 import { buttonVariants } from "@/components/ui/button";
 import { LogoutButton } from "./logout-button";
 
-export async function Header() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+export function HeaderSkeleton() {
+  return (
+    <header className="sticky top-0 z-40 border-b border-border bg-background/90 backdrop-blur">
+      <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
+        <span className="text-lg font-semibold tracking-tight text-foreground">UNSAID</span>
+        <div className="size-9" />
+      </div>
+    </header>
+  );
+}
 
-  let username: string | null = null;
-  if (user) {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("username")
-      .eq("id", user.id)
-      .maybeSingle();
-    username = profile?.username ?? null;
+export async function Header() {
+  const user = await getCurrentUser();
+  const profile = user ? await getProfileById(user.id) : null;
+
+  let requestCount = 0;
+  if (user && profile?.is_private) {
+    const supabase = await createClient();
+    const { count } = await supabase
+      .from("follows")
+      .select("*", { count: "exact", head: true })
+      .eq("following_id", user.id)
+      .eq("status", "pending");
+    requestCount = count ?? 0;
   }
 
   return (
@@ -29,11 +42,29 @@ export async function Header() {
 
         <div className="flex items-center gap-2">
           <ThemeToggle />
-          {user ? (
+          {user && profile ? (
             <>
-              <span className="hidden text-sm text-muted-foreground sm:inline">
-                @{username}
-              </span>
+              {requestCount > 0 && (
+                <Link
+                  href="/requests"
+                  className="hidden text-sm font-medium text-primary hover:underline sm:inline"
+                >
+                  Requests ({requestCount})
+                </Link>
+              )}
+              <Link
+                href={`/${profile.username}`}
+                className="flex items-center gap-2 rounded-full pl-1 pr-3 py-1 hover:bg-surface-muted"
+              >
+                <Avatar
+                  src={profile.avatar_url}
+                  name={profile.display_name ?? profile.username}
+                  size={28}
+                />
+                <span className="hidden text-sm text-foreground sm:inline">
+                  @{profile.username}
+                </span>
+              </Link>
               <LogoutButton />
             </>
           ) : (
