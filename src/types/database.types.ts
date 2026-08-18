@@ -1,9 +1,40 @@
-// Hand-written to match supabase/migrations/20260818000001_init_profiles.sql
-// and 20260818000002_follows_and_avatars.sql.
+// Hand-written to match supabase/migrations/20260818000001_init_profiles.sql,
+// 20260818000002_follows_and_avatars.sql, and
+// 20260818000003_posts_and_social_core.sql.
 // Once the Supabase CLI is linked to the project, regenerate with:
 //   npx supabase gen types typescript --linked > src/types/database.types.ts
 
 export type Json = string | number | boolean | null | { [key: string]: Json } | Json[];
+
+export type PostType = "post" | "confession" | "story" | "question" | "poll" | "photo";
+export type EducationLevel = "school" | "plus_two" | "bachelor" | "master" | "other";
+export type InstitutionType = "school" | "college" | "university" | "other";
+export type InstitutionStatus = "pending" | "approved" | "rejected";
+export type Mood =
+  | "love"
+  | "heartbroken"
+  | "sad"
+  | "funny"
+  | "angry"
+  | "support"
+  | "calm"
+  | "motivated"
+  | "confused"
+  | "happy";
+export type ReactionType = "love" | "hug" | "funny" | "relatable" | "angry" | "fire";
+export type ReportTargetType = "post" | "comment" | "user" | "message" | "community";
+export type ReportReason =
+  | "harassment"
+  | "bullying"
+  | "spam"
+  | "threat"
+  | "hate"
+  | "personal_information"
+  | "impersonation"
+  | "sexual_content"
+  | "dangerous_content"
+  | "other";
+export type ReportStatus = "pending" | "reviewed" | "actioned" | "dismissed";
 
 export type Database = {
   public: {
@@ -16,6 +47,9 @@ export type Database = {
           bio: string | null;
           avatar_url: string | null;
           is_private: boolean;
+          country: string | null;
+          education_level: EducationLevel | null;
+          institution_id: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -26,6 +60,9 @@ export type Database = {
           bio?: string | null;
           avatar_url?: string | null;
           is_private?: boolean;
+          country?: string | null;
+          education_level?: EducationLevel | null;
+          institution_id?: string | null;
         };
         Update: {
           username?: string;
@@ -33,7 +70,29 @@ export type Database = {
           bio?: string | null;
           avatar_url?: string | null;
           is_private?: boolean;
+          country?: string | null;
+          education_level?: EducationLevel | null;
+          institution_id?: string | null;
         };
+        Relationships: [];
+      };
+      institutions: {
+        Row: {
+          id: string;
+          name: string;
+          country: string | null;
+          type: InstitutionType | null;
+          status: InstitutionStatus;
+          suggested_by: string | null;
+          created_at: string;
+        };
+        Insert: {
+          name: string;
+          country?: string | null;
+          type?: InstitutionType | null;
+          suggested_by?: string | null;
+        };
+        Update: { status?: InstitutionStatus };
         Relationships: [];
       };
       account_private: {
@@ -73,9 +132,221 @@ export type Database = {
         };
         Relationships: [];
       };
+      categories: {
+        Row: {
+          id: string;
+          slug: string;
+          label: string;
+          position: number;
+          created_at: string;
+        };
+        Insert: { slug: string; label: string; position?: number };
+        Update: { slug?: string; label?: string; position?: number };
+        Relationships: [];
+      };
+      posts: {
+        Row: {
+          id: string;
+          author_id: string;
+          type: PostType;
+          content: string | null;
+          category_id: string | null;
+          mood: Mood | null;
+          is_anonymous: boolean;
+          comments_enabled: boolean;
+          content_warning: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          author_id: string;
+          type: PostType;
+          content?: string | null;
+          category_id?: string | null;
+          mood?: Mood | null;
+          is_anonymous?: boolean;
+          comments_enabled?: boolean;
+          content_warning?: string | null;
+        };
+        Update: {
+          content?: string | null;
+          category_id?: string | null;
+          mood?: Mood | null;
+          comments_enabled?: boolean;
+          content_warning?: string | null;
+        };
+        Relationships: [];
+      };
+      post_media: {
+        Row: {
+          id: string;
+          post_id: string;
+          url: string;
+          width: number | null;
+          height: number | null;
+          position: number;
+          created_at: string;
+        };
+        Insert: {
+          post_id: string;
+          url: string;
+          width?: number | null;
+          height?: number | null;
+          position?: number;
+        };
+        Update: { position?: number };
+        Relationships: [];
+      };
+      poll_options: {
+        Row: { id: string; post_id: string; option_text: string; position: number };
+        Insert: { post_id: string; option_text: string; position?: number };
+        Update: { option_text?: string; position?: number };
+        Relationships: [];
+      };
+      poll_votes: {
+        Row: { post_id: string; option_id: string; voter_id: string; created_at: string };
+        Insert: { post_id: string; option_id: string; voter_id: string };
+        Update: Record<string, never>;
+        Relationships: [];
+      };
+      comments: {
+        Row: {
+          id: string;
+          post_id: string;
+          author_id: string;
+          parent_id: string | null;
+          content: string;
+          is_anonymous: boolean;
+          is_pinned: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          post_id: string;
+          author_id: string;
+          parent_id?: string | null;
+          content: string;
+          is_anonymous?: boolean;
+        };
+        Update: { content?: string };
+        Relationships: [];
+      };
+      reactions: {
+        Row: {
+          id: string;
+          user_id: string;
+          post_id: string | null;
+          comment_id: string | null;
+          type: ReactionType;
+          created_at: string;
+        };
+        Insert: {
+          user_id: string;
+          post_id?: string | null;
+          comment_id?: string | null;
+          type: ReactionType;
+        };
+        Update: { type?: ReactionType };
+        Relationships: [];
+      };
+      bookmarks: {
+        Row: { user_id: string; post_id: string; created_at: string };
+        Insert: { user_id: string; post_id: string };
+        Update: Record<string, never>;
+        Relationships: [];
+      };
+      reports: {
+        Row: {
+          id: string;
+          reporter_id: string;
+          target_type: ReportTargetType;
+          target_id: string;
+          reason: ReportReason;
+          details: string | null;
+          status: ReportStatus;
+          created_at: string;
+        };
+        Insert: {
+          reporter_id: string;
+          target_type: ReportTargetType;
+          target_id: string;
+          reason: ReportReason;
+          details?: string | null;
+        };
+        Update: { status?: ReportStatus };
+        Relationships: [];
+      };
+      hashtags: {
+        Row: { id: string; name: string; created_at: string };
+        Insert: { name: string };
+        Update: { name?: string };
+        Relationships: [];
+      };
+      post_hashtags: {
+        Row: { post_id: string; hashtag_id: string };
+        Insert: { post_id: string; hashtag_id: string };
+        Update: Record<string, never>;
+        Relationships: [];
+      };
+      reposts: {
+        Row: { id: string; user_id: string; post_id: string; quote: string | null; created_at: string };
+        Insert: { user_id: string; post_id: string; quote?: string | null };
+        Update: Record<string, never>;
+        Relationships: [];
+      };
+      hidden_posts: {
+        Row: { user_id: string; post_id: string; created_at: string };
+        Insert: { user_id: string; post_id: string };
+        Update: Record<string, never>;
+        Relationships: [];
+      };
     };
-    Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Views: {
+      posts_public: {
+        Row: {
+          id: string;
+          type: PostType;
+          content: string | null;
+          category_id: string | null;
+          mood: Mood | null;
+          is_anonymous: boolean;
+          comments_enabled: boolean;
+          content_warning: string | null;
+          created_at: string;
+          updated_at: string;
+          author_id: string | null;
+          author_username: string | null;
+          author_display_name: string | null;
+          author_avatar_url: string | null;
+        };
+        Relationships: [];
+      };
+      comments_public: {
+        Row: {
+          id: string;
+          post_id: string;
+          parent_id: string | null;
+          content: string;
+          is_anonymous: boolean;
+          is_pinned: boolean;
+          created_at: string;
+          updated_at: string;
+          author_id: string | null;
+          author_username: string | null;
+          author_display_name: string | null;
+          author_avatar_url: string | null;
+        };
+        Relationships: [];
+      };
+    };
+    Functions: {
+      set_comment_pinned: {
+        Args: { p_comment_id: string; p_pinned: boolean };
+        Returns: void;
+      };
+    };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
   };
@@ -83,3 +354,11 @@ export type Database = {
 
 export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 export type Follow = Database["public"]["Tables"]["follows"]["Row"];
+export type Category = Database["public"]["Tables"]["categories"]["Row"];
+export type Post = Database["public"]["Tables"]["posts"]["Row"];
+export type PostPublic = Database["public"]["Views"]["posts_public"]["Row"];
+export type CommentPublic = Database["public"]["Views"]["comments_public"]["Row"];
+export type PollOption = Database["public"]["Tables"]["poll_options"]["Row"];
+export type Reaction = Database["public"]["Tables"]["reactions"]["Row"];
+export type Institution = Database["public"]["Tables"]["institutions"]["Row"];
+export type Repost = Database["public"]["Tables"]["reposts"]["Row"];

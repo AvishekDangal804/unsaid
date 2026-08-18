@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/supabase/get-user";
 import { getProfileById } from "@/lib/data/profile";
+import { getFeedPosts } from "@/lib/data/posts";
 import { buttonVariants } from "@/components/ui/button";
 import { CompleteProfileBanner } from "@/components/shared/complete-profile-banner";
+import { Feed } from "@/components/post/feed";
 
 export default async function HomePage() {
   const user = await getCurrentUser();
@@ -12,16 +14,18 @@ export default async function HomePage() {
     const profileIncomplete =
       profile && !profile.display_name && !profile.bio && !profile.avatar_url;
 
+    const { posts, nextCursor } = await getFeedPosts({ scope: "following", userId: user.id });
+
     return (
       <div>
         {profileIncomplete && <CompleteProfileBanner userId={user.id} />}
-        <div className="flex flex-1 flex-col items-center justify-center gap-2 py-24 text-center">
-          <h1 className="text-xl font-semibold text-foreground">You&apos;re all caught up.</h1>
-          <p className="max-w-sm text-sm text-muted-foreground">
-            Your feed is coming soon — this is where confessions, stories, and thoughts from
-            people you follow will show up.
-          </p>
-        </div>
+        <Feed
+          initialPosts={posts}
+          initialCursor={nextCursor}
+          initialScope="following"
+          currentUserId={user.id}
+          showTabs
+        />
       </div>
     );
   }

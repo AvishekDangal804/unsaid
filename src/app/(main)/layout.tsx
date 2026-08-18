@@ -1,7 +1,21 @@
 import { Suspense } from "react";
+import { redirect } from "next/navigation";
 import { Header, HeaderSkeleton } from "@/components/layout/header";
+import { getCurrentUser } from "@/lib/supabase/get-user";
+import { getProfileById } from "@/lib/data/profile";
 
-export default function MainLayout({ children }: { children: React.ReactNode }) {
+export default async function MainLayout({ children }: { children: React.ReactNode }) {
+  const user = await getCurrentUser();
+
+  if (user) {
+    const profile = await getProfileById(user.id);
+    const onboardingIncomplete =
+      profile && (!profile.country || !profile.education_level || !profile.institution_id);
+    if (onboardingIncomplete) {
+      redirect("/onboarding");
+    }
+  }
+
   return (
     <>
       <Suspense fallback={<HeaderSkeleton />}>

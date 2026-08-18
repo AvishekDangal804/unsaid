@@ -1,17 +1,31 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
+import { GraduationCap } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getCurrentUser } from "@/lib/supabase/get-user";
+import { getPostsByAuthor } from "@/lib/data/posts";
 import { Avatar } from "@/components/ui/avatar";
 import { buttonVariants } from "@/components/ui/button";
+import { PostCard } from "@/components/post/post-card";
 import { FollowButton } from "./follow-button";
 
 async function getProfile(username: string) {
   const admin = createAdminClient();
   const { data } = await admin.from("profiles").select("*").ilike("username", username).maybeSingle();
   return data;
+}
+
+async function getInstitutionName(institutionId: string | null) {
+  if (!institutionId) return null;
+  const admin = createAdminClient();
+  const { data } = await admin
+    .from("institutions")
+    .select("name")
+    .eq("id", institutionId)
+    .maybeSingle();
+  return data?.name ?? null;
 }
 
 export async function generateMetadata({
@@ -33,6 +47,7 @@ export default async function ProfilePage({ params }: PageProps<"/[username]">) 
 
   const supabase = await createClient();
   const isOwnProfile = user?.id === profile.id;
+  const institutionName = await getInstitutionName(profile.institution_id);
 
   const [{ count: followerCount }, { count: followingCount }, relationshipResult] =
     await Promise.all([
@@ -57,6 +72,8 @@ export default async function ProfilePage({ params }: PageProps<"/[username]">) 
     ]);
 
   const relationship: "none" | "pending" | "accepted" = relationshipResult.data?.status ?? "none";
+  const canSeePosts = isOwnProfile || !profile.is_private || relationship === "accepted";
+  const posts = canSeePosts ? await getPostsByAuthor(profile.id, user?.id ?? null) : [];
 
   return (
     <div className="mx-auto w-full max-w-2xl">
@@ -74,6 +91,13 @@ export default async function ProfilePage({ params }: PageProps<"/[username]">) 
 
           {profile.bio && (
             <p className="mt-2 whitespace-pre-wrap text-sm text-foreground">{profile.bio}</p>
+          )}
+
+          {institutionName && (
+            <div className="mt-2 flex items-center justify-center gap-1.5 text-sm text-muted-foreground sm:justify-start">
+              <GraduationCap className="size-4 text-primary" />
+              {institutionName}
+            </div>
           )}
 
           <div className="mt-3 flex justify-center gap-4 text-sm sm:justify-start">
@@ -108,12 +132,26 @@ export default async function ProfilePage({ params }: PageProps<"/[username]">) 
         </div>
       </div>
 
-      <div className="flex flex-col items-center gap-2 py-24 text-center">
-        <p className="text-sm text-muted-foreground">
-          {profile.is_private && !isOwnProfile && relationship !== "accepted"
-            ? "This account is private. Follow to see their posts."
-            : "Nothing here yet. Be the first to share something."}
-        </p>
+      <div className="mt-4">
+        {!canSeePosts ? (
+          <div className="flex flex-col items-center gap-2 py-24 text-center">
+            <p className="text-sm text-muted-foreground">
+              This account is private. Follow to see their posts.
+            </p>
+          </div>
+        ) : posts.length === 0 ? (
+          <div className="flex flex-col items-center gap-2 py-24 text-center">
+            <p className="text-sm text-muted-foreground">
+              Nothing here yet. Be the first to share something.
+            </p>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-3">
+            {posts.map((post) => (
+              <PostCard key={post.id} post={post} currentUserId={user?.id ?? null} />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

@@ -3,8 +3,10 @@ import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/supabase/get-user";
 import { getProfileById } from "@/lib/data/profile";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
+import { CreatePostMenu } from "@/components/shared/create-post-menu";
 import { Avatar } from "@/components/ui/avatar";
 import { buttonVariants } from "@/components/ui/button";
+import { Bookmark } from "lucide-react";
 import { LogoutButton } from "./logout-button";
 
 export function HeaderSkeleton() {
@@ -44,6 +46,14 @@ export async function Header() {
           <ThemeToggle />
           {user && profile ? (
             <>
+              <CreatePostMenu />
+              <Link
+                href="/saved"
+                className="hidden size-9 items-center justify-center rounded-full text-muted-foreground hover:bg-surface-muted sm:flex"
+                aria-label="Saved posts"
+              >
+                <Bookmark className="size-4" />
+              </Link>
               {requestCount > 0 && (
                 <Link
                   href="/requests"
