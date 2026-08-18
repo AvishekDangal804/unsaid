@@ -18,6 +18,7 @@ const TYPE_ICON: Record<string, string> = {
   reply: "↩️",
   mention_post: "📣",
   mention_comment: "📣",
+  message: "✉️",
   system: "🔔",
 };
 
@@ -52,6 +53,8 @@ function messageFor(item: NotificationItemType): string {
       return `${who} mentioned you in a post`;
     case "mention_comment":
       return `${who} mentioned you in a comment`;
+    case "message":
+      return `${who} sent you a message`;
     default:
       return "New notification";
   }
@@ -63,6 +66,7 @@ function hrefFor(item: NotificationItemType): string | null {
   }
   if (item.type === "follow_request") return "/requests";
   if (item.targetType === "post" && item.targetId) return `/post/${item.targetId}`;
+  if (item.targetType === "conversation" && item.targetId) return `/messages/${item.targetId}`;
   return null;
 }
 

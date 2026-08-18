@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
-import { GraduationCap } from "lucide-react";
+import { GraduationCap, MessageCircle } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getCurrentUser } from "@/lib/supabase/get-user";
@@ -10,6 +10,8 @@ import { Avatar } from "@/components/ui/avatar";
 import { buttonVariants } from "@/components/ui/button";
 import { PostCard } from "@/components/post/post-card";
 import { FollowButton } from "./follow-button";
+import { ProfileMenu } from "./profile-menu";
+import { StartConversationButton } from "@/components/messages/start-conversation-button";
 
 async function getProfile(username: string) {
   const admin = createAdminClient();
@@ -75,6 +77,17 @@ export default async function ProfilePage({ params }: PageProps<"/[username]">) 
   const canSeePosts = isOwnProfile || !profile.is_private || relationship === "accepted";
   const posts = canSeePosts ? await getPostsByAuthor(profile.id, user?.id ?? null) : [];
 
+  let isMuted = false;
+  let isBlocked = false;
+  if (user && !isOwnProfile) {
+    const [muteResult, blockResult] = await Promise.all([
+      supabase.from("mutes").select("muted_id").eq("muter_id", user.id).eq("muted_id", profile.id).maybeSingle(),
+      supabase.from("blocks").select("blocked_id").eq("blocker_id", user.id).eq("blocked_id", profile.id).maybeSingle(),
+    ]);
+    isMuted = Boolean(muteResult.data);
+    isBlocked = Boolean(blockResult.data);
+  }
+
   return (
     <div className="mx-auto w-full max-w-2xl">
       <div className="flex flex-col items-center gap-4 border-b border-border pb-6 text-center sm:flex-row sm:items-start sm:text-left">
@@ -111,7 +124,7 @@ export default async function ProfilePage({ params }: PageProps<"/[username]">) 
             </span>
           </div>
 
-          <div className="mt-4 flex justify-center sm:justify-start">
+          <div className="mt-4 flex justify-center gap-2 sm:justify-start">
             {isOwnProfile ? (
               <Link
                 href="/settings/profile"
@@ -120,13 +133,29 @@ export default async function ProfilePage({ params }: PageProps<"/[username]">) 
                 Edit profile
               </Link>
             ) : (
-              <FollowButton
-                targetId={profile.id}
-                targetUsername={profile.username}
-                targetIsPrivate={profile.is_private}
-                initialRelationship={relationship}
-                isLoggedIn={Boolean(user)}
-              />
+              <>
+                <FollowButton
+                  targetId={profile.id}
+                  targetUsername={profile.username}
+                  targetIsPrivate={profile.is_private}
+                  initialRelationship={relationship}
+                  isLoggedIn={Boolean(user)}
+                />
+                {user && (
+                  <StartConversationButton targetId={profile.id}>
+                    <MessageCircle className="size-4" />
+                    Message
+                  </StartConversationButton>
+                )}
+                {user && (
+                  <ProfileMenu
+                    targetId={profile.id}
+                    targetUsername={profile.username}
+                    initialMuted={isMuted}
+                    initialBlocked={isBlocked}
+                  />
+                )}
+              </>
             )}
           </div>
         </div>

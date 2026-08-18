@@ -5,10 +5,12 @@ import { getProfileById } from "@/lib/data/profile";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { CreatePostMenu } from "@/components/shared/create-post-menu";
 import { NotificationBell } from "./notification-bell";
+import { MessagesLink } from "./messages-link";
 import { Avatar } from "@/components/ui/avatar";
 import { buttonVariants } from "@/components/ui/button";
 import { Bookmark, Compass, Search } from "lucide-react";
 import { getUnreadNotificationCount } from "@/lib/data/notifications";
+import { getUnreadMessageCount } from "@/lib/data/messages";
 import { LogoutButton } from "./logout-button";
 
 export function HeaderSkeleton() {
@@ -28,6 +30,7 @@ export async function Header() {
 
   let requestCount = 0;
   let unreadCount = 0;
+  let unreadMessages = 0;
   if (user && profile) {
     if (profile.is_private) {
       const supabase = await createClient();
@@ -38,7 +41,10 @@ export async function Header() {
         .eq("status", "pending");
       requestCount = count ?? 0;
     }
-    unreadCount = await getUnreadNotificationCount(user.id);
+    [unreadCount, unreadMessages] = await Promise.all([
+      getUnreadNotificationCount(user.id),
+      getUnreadMessageCount(user.id),
+    ]);
   }
 
   return (
@@ -77,6 +83,7 @@ export async function Header() {
               <div className="hidden sm:block">
                 <CreatePostMenu />
               </div>
+              <MessagesLink userId={user.id} initialUnread={unreadMessages > 0} />
               <div className="hidden sm:block">
                 <NotificationBell userId={user.id} initialCount={unreadCount} />
               </div>

@@ -96,6 +96,7 @@ export function PostCard({ post, currentUserId }: { post: FeedPost; currentUserI
           postId={post.id}
           isOwn={isOwn}
           initialSaved={post.isSaved}
+          authorId={post.author?.id}
           onHideAction={() => setHidden(true)}
         />
       </div>

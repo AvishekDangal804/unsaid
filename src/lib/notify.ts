@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import type { NotificationType } from "@/types/database.types";
+import type { NotificationType, NotificationTargetType } from "@/types/database.types";
 
 type SupabaseServerClient = Awaited<ReturnType<typeof createClient>>;
 
@@ -8,7 +8,7 @@ export async function notify(
   params: {
     recipientId: string;
     type: NotificationType;
-    targetType?: "post" | "comment" | "profile";
+    targetType?: NotificationTargetType;
     targetId?: string;
     isAnonymousActor?: boolean;
   },

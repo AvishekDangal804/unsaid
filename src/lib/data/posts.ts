@@ -261,6 +261,12 @@ export async function getFeedPosts(options: {
     if (hiddenIds.length > 0) {
       query = query.not("id", "in", `(${hiddenIds.join(",")})`);
     }
+
+    const { data: muted } = await supabase.from("mutes").select("muted_id").eq("muter_id", userId);
+    const mutedIds = (muted ?? []).map((m) => m.muted_id);
+    if (mutedIds.length > 0) {
+      query = query.not("author_id", "in", `(${mutedIds.join(",")})`);
+    }
   }
 
   if (filter?.categoryId) query = query.eq("category_id", filter.categoryId);

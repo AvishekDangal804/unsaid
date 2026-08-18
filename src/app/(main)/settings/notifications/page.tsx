@@ -29,6 +29,7 @@ export default async function NotificationSettingsPage() {
             replies: true,
             follows: true,
             mentions: true,
+            messages: true,
             quiet_mode: false,
           }
         }

@@ -20,6 +20,7 @@ export async function updateNotificationPreferences(formData: FormData): Promise
       replies: formData.get("replies") === "on",
       follows: formData.get("follows") === "on",
       mentions: formData.get("mentions") === "on",
+      messages: formData.get("messages") === "on",
       quiet_mode: formData.get("quietMode") === "on",
     })
     .eq("user_id", user.id);

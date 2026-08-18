@@ -35,6 +35,9 @@ export type ReportReason =
   | "dangerous_content"
   | "other";
 export type ReportStatus = "pending" | "reviewed" | "actioned" | "dismissed";
+export type WhoCanMessage = "everyone" | "followers" | "no_one";
+export type ConversationStatus = "pending" | "accepted" | "declined";
+export type NotificationTargetType = "post" | "comment" | "profile" | "conversation";
 export type NotificationType =
   | "follow"
   | "follow_request"
@@ -45,6 +48,7 @@ export type NotificationType =
   | "reply"
   | "mention_post"
   | "mention_comment"
+  | "message"
   | "system";
 
 export type Database = {
@@ -61,6 +65,7 @@ export type Database = {
           country: string | null;
           education_level: EducationLevel | null;
           institution_id: string | null;
+          who_can_message: WhoCanMessage;
           created_at: string;
           updated_at: string;
         };
@@ -74,6 +79,7 @@ export type Database = {
           country?: string | null;
           education_level?: EducationLevel | null;
           institution_id?: string | null;
+          who_can_message?: WhoCanMessage;
         };
         Update: {
           username?: string;
@@ -84,6 +90,7 @@ export type Database = {
           country?: string | null;
           education_level?: EducationLevel | null;
           institution_id?: string | null;
+          who_can_message?: WhoCanMessage;
         };
         Relationships: [];
       };
@@ -355,6 +362,7 @@ export type Database = {
           replies: boolean;
           follows: boolean;
           mentions: boolean;
+          messages: boolean;
           quiet_mode: boolean;
           updated_at: string;
         };
@@ -365,6 +373,7 @@ export type Database = {
           replies?: boolean;
           follows?: boolean;
           mentions?: boolean;
+          messages?: boolean;
           quiet_mode?: boolean;
         };
         Relationships: [];
@@ -376,13 +385,57 @@ export type Database = {
           actor_id: string | null;
           is_anonymous_actor: boolean;
           type: NotificationType;
-          target_type: "post" | "comment" | "profile" | null;
+          target_type: NotificationTargetType | null;
           target_id: string | null;
           read_at: string | null;
           created_at: string;
         };
         Insert: never;
         Update: { read_at?: string | null };
+        Relationships: [];
+      };
+      blocks: {
+        Row: { blocker_id: string; blocked_id: string; created_at: string };
+        Insert: { blocker_id: string; blocked_id: string };
+        Update: Record<string, never>;
+        Relationships: [];
+      };
+      mutes: {
+        Row: { muter_id: string; muted_id: string; created_at: string };
+        Insert: { muter_id: string; muted_id: string };
+        Update: Record<string, never>;
+        Relationships: [];
+      };
+      conversations: {
+        Row: {
+          id: string;
+          user_one_id: string;
+          user_two_id: string;
+          initiator_id: string;
+          status: ConversationStatus;
+          created_at: string;
+          last_message_at: string;
+        };
+        Insert: never;
+        Update: { status?: ConversationStatus };
+        Relationships: [];
+      };
+      conversation_deletions: {
+        Row: { conversation_id: string; user_id: string; deleted_at: string };
+        Insert: { conversation_id: string; user_id: string };
+        Update: Record<string, never>;
+        Relationships: [];
+      };
+      conversation_reads: {
+        Row: { conversation_id: string; user_id: string; last_read_at: string };
+        Insert: { conversation_id: string; user_id: string; last_read_at?: string };
+        Update: { last_read_at?: string };
+        Relationships: [];
+      };
+      messages: {
+        Row: { id: string; conversation_id: string; sender_id: string; content: string; created_at: string };
+        Insert: { conversation_id: string; sender_id: string; content: string };
+        Update: Record<string, never>;
         Relationships: [];
       };
     };
@@ -433,11 +486,15 @@ export type Database = {
         Args: {
           p_recipient_id: string;
           p_type: NotificationType;
-          p_target_type: "post" | "comment" | "profile" | null;
+          p_target_type: NotificationTargetType | null;
           p_target_id: string | null;
           p_is_anonymous_actor?: boolean;
         };
         Returns: void;
+      };
+      get_or_create_conversation: {
+        Args: { p_other_user_id: string };
+        Returns: string;
       };
     };
     Enums: Record<string, never>;
@@ -460,3 +517,7 @@ export type CommunityMember = Database["public"]["Tables"]["community_members"][
 export type DailyQuestion = Database["public"]["Tables"]["daily_questions"]["Row"];
 export type Notification = Database["public"]["Tables"]["notifications"]["Row"];
 export type NotificationPreferences = Database["public"]["Tables"]["notification_preferences"]["Row"];
+export type Block = Database["public"]["Tables"]["blocks"]["Row"];
+export type Mute = Database["public"]["Tables"]["mutes"]["Row"];
+export type Conversation = Database["public"]["Tables"]["conversations"]["Row"];
+export type Message = Database["public"]["Tables"]["messages"]["Row"];

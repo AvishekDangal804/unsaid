@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { GraduationCap } from "lucide-react";
+import { GraduationCap, Lock, ShieldAlert, Bell } from "lucide-react";
 import { getCurrentUser } from "@/lib/supabase/get-user";
 import { getProfileById } from "@/lib/data/profile";
 import { AvatarUploader } from "@/components/shared/avatar-uploader";
@@ -37,13 +37,36 @@ export default async function EditProfilePage() {
 
       <ProfileEditForm profile={profile} />
 
-      <Link
-        href="/onboarding"
-        className="mt-6 flex items-center gap-2 rounded-xl border border-border bg-surface-muted px-4 py-3 text-sm text-foreground hover:bg-border"
-      >
-        <GraduationCap className="size-4 text-primary" />
-        Edit country, education, or school
-      </Link>
+      <div className="mt-6 flex flex-col gap-2">
+        <Link
+          href="/onboarding"
+          className="flex items-center gap-2 rounded-xl border border-border bg-surface-muted px-4 py-3 text-sm text-foreground hover:bg-border"
+        >
+          <GraduationCap className="size-4 text-primary" />
+          Edit country, education, or school
+        </Link>
+        <Link
+          href="/settings/privacy"
+          className="flex items-center gap-2 rounded-xl border border-border bg-surface-muted px-4 py-3 text-sm text-foreground hover:bg-border"
+        >
+          <Lock className="size-4 text-primary" />
+          Privacy
+        </Link>
+        <Link
+          href="/settings/notifications"
+          className="flex items-center gap-2 rounded-xl border border-border bg-surface-muted px-4 py-3 text-sm text-foreground hover:bg-border"
+        >
+          <Bell className="size-4 text-primary" />
+          Notifications
+        </Link>
+        <Link
+          href="/settings/safety"
+          className="flex items-center gap-2 rounded-xl border border-border bg-surface-muted px-4 py-3 text-sm text-foreground hover:bg-border"
+        >
+          <ShieldAlert className="size-4 text-primary" />
+          Blocked &amp; muted accounts
+        </Link>
+      </div>
 
       <div className="mt-6 flex justify-end sm:hidden">
         <LogoutButton />

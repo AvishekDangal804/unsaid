@@ -4,12 +4,16 @@ import { useState, useTransition } from "react";
 import { updateNotificationPreferences } from "./actions";
 import { Button } from "@/components/ui/button";
 
-const TOGGLES: { key: "reactions" | "comments" | "replies" | "follows" | "mentions"; label: string }[] = [
+const TOGGLES: {
+  key: "reactions" | "comments" | "replies" | "follows" | "mentions" | "messages";
+  label: string;
+}[] = [
   { key: "reactions", label: "Reactions" },
   { key: "comments", label: "Comments" },
   { key: "replies", label: "Replies" },
   { key: "follows", label: "Follows" },
   { key: "mentions", label: "Mentions" },
+  { key: "messages", label: "Messages" },
 ];
 
 export function PreferencesForm({
@@ -21,6 +25,7 @@ export function PreferencesForm({
     replies: boolean;
     follows: boolean;
     mentions: boolean;
+    messages: boolean;
     quiet_mode: boolean;
   };
 }) {

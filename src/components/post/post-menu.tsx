@@ -2,19 +2,22 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { MoreHorizontal, Bookmark, Flag, Link2, Trash2, EyeOff } from "lucide-react";
+import { MoreHorizontal, Bookmark, Flag, Link2, Trash2, EyeOff, VolumeX, Ban } from "lucide-react";
 import { toggleSave, deletePost, hidePost } from "@/app/(main)/post-actions";
+import { muteUser, blockUser } from "@/app/(main)/safety-actions";
 import { ReportDialog } from "@/components/shared/report-dialog";
 
 export function PostMenu({
   postId,
   isOwn,
   initialSaved,
+  authorId,
   onHideAction,
 }: {
   postId: string;
   isOwn: boolean;
   initialSaved: boolean;
+  authorId?: string | null;
   onHideAction?: () => void;
 }) {
   const router = useRouter();
@@ -22,6 +25,8 @@ export function PostMenu({
   const [reportOpen, setReportOpen] = useState(false);
   const [saved, setSaved] = useState(initialSaved);
   const [deleted, setDeleted] = useState(false);
+  const [muted, setMuted] = useState(false);
+  const [blocked, setBlocked] = useState(false);
   const [, startTransition] = useTransition();
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -58,6 +63,27 @@ export function PostMenu({
     });
   }
 
+  function handleMute() {
+    setOpen(false);
+    if (!authorId) return;
+    setMuted(true);
+    startTransition(async () => {
+      const result = await muteUser(authorId);
+      if (!("error" in result)) router.refresh();
+    });
+  }
+
+  function handleBlock() {
+    setOpen(false);
+    if (!authorId) return;
+    if (!window.confirm("Block this person? They won't be able to see your posts or message you.")) return;
+    setBlocked(true);
+    startTransition(async () => {
+      const result = await blockUser(authorId, "");
+      if (!("error" in result)) router.refresh();
+    });
+  }
+
   function handleDelete() {
     setOpen(false);
     if (!window.confirm("Delete this post? This can't be undone.")) return;
@@ -70,7 +96,7 @@ export function PostMenu({
     });
   }
 
-  if (deleted) return null;
+  if (deleted || muted || blocked) return null;
 
   return (
     <div className="relative" ref={containerRef}>
@@ -131,6 +157,26 @@ export function PostMenu({
                 <EyeOff className="size-4" />
                 Not interested
               </button>
+              {authorId && (
+                <>
+                  <button
+                    type="button"
+                    onClick={handleMute}
+                    className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-sm text-foreground hover:bg-surface-muted"
+                  >
+                    <VolumeX className="size-4" />
+                    Mute user
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleBlock}
+                    className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-sm text-danger hover:bg-surface-muted"
+                  >
+                    <Ban className="size-4" />
+                    Block user
+                  </button>
+                </>
+              )}
             </>
           )}
         </div>

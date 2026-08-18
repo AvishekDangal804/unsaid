@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import type { Notification, NotificationType } from "@/types/database.types";
+import type { Notification, NotificationType, NotificationTargetType } from "@/types/database.types";
 
 export type NotificationActor = {
   id: string | null;
@@ -13,7 +13,7 @@ export type NotificationItem = {
   type: NotificationType;
   isRead: boolean;
   createdAt: string;
-  targetType: "post" | "comment" | "profile" | null;
+  targetType: NotificationTargetType | null;
   targetId: string | null;
   actors: NotificationActor[];
   extraCount: number;
