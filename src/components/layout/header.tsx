@@ -4,9 +4,11 @@ import { getCurrentUser } from "@/lib/supabase/get-user";
 import { getProfileById } from "@/lib/data/profile";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { CreatePostMenu } from "@/components/shared/create-post-menu";
+import { NotificationBell } from "./notification-bell";
 import { Avatar } from "@/components/ui/avatar";
 import { buttonVariants } from "@/components/ui/button";
 import { Bookmark, Compass, Search } from "lucide-react";
+import { getUnreadNotificationCount } from "@/lib/data/notifications";
 import { LogoutButton } from "./logout-button";
 
 export function HeaderSkeleton() {
@@ -25,14 +27,18 @@ export async function Header() {
   const profile = user ? await getProfileById(user.id) : null;
 
   let requestCount = 0;
-  if (user && profile?.is_private) {
-    const supabase = await createClient();
-    const { count } = await supabase
-      .from("follows")
-      .select("*", { count: "exact", head: true })
-      .eq("following_id", user.id)
-      .eq("status", "pending");
-    requestCount = count ?? 0;
+  let unreadCount = 0;
+  if (user && profile) {
+    if (profile.is_private) {
+      const supabase = await createClient();
+      const { count } = await supabase
+        .from("follows")
+        .select("*", { count: "exact", head: true })
+        .eq("following_id", user.id)
+        .eq("status", "pending");
+      requestCount = count ?? 0;
+    }
+    unreadCount = await getUnreadNotificationCount(user.id);
   }
 
   return (
@@ -70,6 +76,9 @@ export async function Header() {
             <>
               <div className="hidden sm:block">
                 <CreatePostMenu />
+              </div>
+              <div className="hidden sm:block">
+                <NotificationBell userId={user.id} initialCount={unreadCount} />
               </div>
               <Link
                 href="/saved"

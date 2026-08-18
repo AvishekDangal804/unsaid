@@ -4,6 +4,7 @@ import { Header, HeaderSkeleton } from "@/components/layout/header";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { getCurrentUser } from "@/lib/supabase/get-user";
 import { getProfileById } from "@/lib/data/profile";
+import { getUnreadNotificationCount } from "@/lib/data/notifications";
 
 export default async function MainLayout({ children }: { children: React.ReactNode }) {
   const user = await getCurrentUser();
@@ -13,6 +14,8 @@ export default async function MainLayout({ children }: { children: React.ReactNo
     redirect("/onboarding");
   }
 
+  const unreadCount = user ? await getUnreadNotificationCount(user.id) : 0;
+
   return (
     <>
       <Suspense fallback={<HeaderSkeleton />}>
@@ -21,7 +24,9 @@ export default async function MainLayout({ children }: { children: React.ReactNo
       <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-4 py-6 pb-20 sm:pb-6">
         {children}
       </main>
-      {profile && <MobileNav username={profile.username} />}
+      {user && profile && (
+        <MobileNav userId={user.id} username={profile.username} initialUnreadCount={unreadCount} />
+      )}
     </>
   );
 }

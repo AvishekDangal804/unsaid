@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { notify } from "@/lib/notify";
 
 export type ActionResult = { error: string } | { success: true };
 
@@ -19,9 +20,11 @@ export async function followUser(targetId: string, targetUsername: string): Prom
     return { error: "You can't follow yourself" };
   }
 
-  const { error } = await supabase
+  const { data: inserted, error } = await supabase
     .from("follows")
-    .insert({ follower_id: user.id, following_id: targetId });
+    .insert({ follower_id: user.id, following_id: targetId })
+    .select("status")
+    .single();
 
   if (error) {
     if (error.code === "23505") {
@@ -29,6 +32,13 @@ export async function followUser(targetId: string, targetUsername: string): Prom
     }
     return { error: "Something went wrong. Try again." };
   }
+
+  await notify(supabase, {
+    recipientId: targetId,
+    type: inserted.status === "pending" ? "follow_request" : "follow",
+    targetType: "profile",
+    targetId: user.id,
+  });
 
   revalidatePath(`/${targetUsername}`);
   return { success: true };
@@ -77,6 +87,13 @@ export async function acceptFollowRequest(followerId: string): Promise<ActionRes
   if (error) {
     return { error: "Something went wrong. Try again." };
   }
+
+  await notify(supabase, {
+    recipientId: followerId,
+    type: "follow_accepted",
+    targetType: "profile",
+    targetId: user.id,
+  });
 
   revalidatePath("/requests");
   return { success: true };

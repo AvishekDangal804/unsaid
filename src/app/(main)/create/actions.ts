@@ -5,6 +5,8 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createPostSchema } from "@/lib/validation/post";
 import { extractHashtags } from "@/lib/hashtags";
+import { extractMentions } from "@/lib/mentions";
+import { notify } from "@/lib/notify";
 
 export type ActionResult = { error: string } | { success: true; postId: string };
 
@@ -101,6 +103,23 @@ export async function createPost(formData: FormData): Promise<ActionResult> {
       if (hashtag) {
         await supabase.from("post_hashtags").insert({ post_id: post.id, hashtag_id: hashtag.id });
       }
+    }
+  }
+
+  const mentionedUsernames = extractMentions(data.content);
+  if (mentionedUsernames.length > 0) {
+    const { data: mentionedProfiles } = await supabase
+      .from("profiles")
+      .select("id, username")
+      .in("username", mentionedUsernames);
+    for (const profile of mentionedProfiles ?? []) {
+      await notify(supabase, {
+        recipientId: profile.id,
+        type: "mention_post",
+        targetType: "post",
+        targetId: post.id,
+        isAnonymousActor: data.isAnonymous,
+      });
     }
   }
 

@@ -35,6 +35,17 @@ export type ReportReason =
   | "dangerous_content"
   | "other";
 export type ReportStatus = "pending" | "reviewed" | "actioned" | "dismissed";
+export type NotificationType =
+  | "follow"
+  | "follow_request"
+  | "follow_accepted"
+  | "reaction_post"
+  | "reaction_comment"
+  | "comment"
+  | "reply"
+  | "mention_post"
+  | "mention_comment"
+  | "system";
 
 export type Database = {
   public: {
@@ -336,6 +347,44 @@ export type Database = {
         Update: { question_text?: string };
         Relationships: [];
       };
+      notification_preferences: {
+        Row: {
+          user_id: string;
+          reactions: boolean;
+          comments: boolean;
+          replies: boolean;
+          follows: boolean;
+          mentions: boolean;
+          quiet_mode: boolean;
+          updated_at: string;
+        };
+        Insert: { user_id: string };
+        Update: {
+          reactions?: boolean;
+          comments?: boolean;
+          replies?: boolean;
+          follows?: boolean;
+          mentions?: boolean;
+          quiet_mode?: boolean;
+        };
+        Relationships: [];
+      };
+      notifications: {
+        Row: {
+          id: string;
+          recipient_id: string;
+          actor_id: string | null;
+          is_anonymous_actor: boolean;
+          type: NotificationType;
+          target_type: "post" | "comment" | "profile" | null;
+          target_id: string | null;
+          read_at: string | null;
+          created_at: string;
+        };
+        Insert: never;
+        Update: { read_at?: string | null };
+        Relationships: [];
+      };
     };
     Views: {
       posts_public: {
@@ -380,6 +429,16 @@ export type Database = {
         Args: { p_comment_id: string; p_pinned: boolean };
         Returns: void;
       };
+      create_notification: {
+        Args: {
+          p_recipient_id: string;
+          p_type: NotificationType;
+          p_target_type: "post" | "comment" | "profile" | null;
+          p_target_id: string | null;
+          p_is_anonymous_actor?: boolean;
+        };
+        Returns: void;
+      };
     };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
@@ -399,3 +458,5 @@ export type Repost = Database["public"]["Tables"]["reposts"]["Row"];
 export type Community = Database["public"]["Tables"]["communities"]["Row"];
 export type CommunityMember = Database["public"]["Tables"]["community_members"]["Row"];
 export type DailyQuestion = Database["public"]["Tables"]["daily_questions"]["Row"];
+export type Notification = Database["public"]["Tables"]["notifications"]["Row"];
+export type NotificationPreferences = Database["public"]["Tables"]["notification_preferences"]["Row"];
