@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { signup } from "../actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { CheckCircle2 } from "lucide-react";
 
 export default function SignupPage() {
+  const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const [pending, startTransition] = useTransition();
@@ -19,6 +21,9 @@ export default function SignupPage() {
       const result = await signup(formData);
       if ("error" in result) {
         setError(result.error);
+      } else if (result.confirmed) {
+        router.replace("/");
+        router.refresh();
       } else {
         setSubmitted(true);
       }

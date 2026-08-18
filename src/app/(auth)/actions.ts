@@ -10,8 +10,9 @@ import {
 } from "@/lib/validation/auth";
 
 export type ActionResult = { error: string } | { success: true };
+export type SignupResult = { error: string } | { success: true; confirmed: boolean };
 
-export async function signup(formData: FormData): Promise<ActionResult> {
+export async function signup(formData: FormData): Promise<SignupResult> {
   const parsed = signupSchema.safeParse({
     email: formData.get("email"),
     username: formData.get("username"),
@@ -47,7 +48,7 @@ export async function signup(formData: FormData): Promise<ActionResult> {
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.signUp({
+  const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
@@ -59,7 +60,9 @@ export async function signup(formData: FormData): Promise<ActionResult> {
     return { error: error.message };
   }
 
-  return { success: true };
+  // If email confirmations are disabled in Supabase, signUp already returns
+  // a live session (cookies are set above) — no inbox step needed.
+  return { success: true, confirmed: data.session !== null };
 }
 
 export async function login(formData: FormData): Promise<ActionResult> {
