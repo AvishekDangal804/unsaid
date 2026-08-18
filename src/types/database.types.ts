@@ -38,6 +38,19 @@ export type ReportStatus = "pending" | "reviewed" | "actioned" | "dismissed";
 export type WhoCanMessage = "everyone" | "followers" | "no_one";
 export type ConversationStatus = "pending" | "accepted" | "declined";
 export type NotificationTargetType = "post" | "comment" | "profile" | "conversation";
+export type AccountStatus = "active" | "suspended" | "banned";
+export type StaffRole = "admin" | "moderator";
+export type ModerationActionType =
+  | "dismiss"
+  | "remove_content"
+  | "hide_content"
+  | "warn"
+  | "suspend"
+  | "ban"
+  | "restrict"
+  | "unrestrict"
+  | "unsuspend"
+  | "unban";
 export type NotificationType =
   | "follow"
   | "follow_request"
@@ -66,6 +79,9 @@ export type Database = {
           education_level: EducationLevel | null;
           institution_id: string | null;
           who_can_message: WhoCanMessage;
+          status: AccountStatus;
+          suspended_until: string | null;
+          is_restricted: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -175,6 +191,7 @@ export type Database = {
           content_warning: string | null;
           community_id: string | null;
           daily_question_id: string | null;
+          is_hidden: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -241,6 +258,7 @@ export type Database = {
           content: string;
           is_anonymous: boolean;
           is_pinned: boolean;
+          is_hidden: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -387,6 +405,7 @@ export type Database = {
           type: NotificationType;
           target_type: NotificationTargetType | null;
           target_id: string | null;
+          message: string | null;
           read_at: string | null;
           created_at: string;
         };
@@ -435,6 +454,27 @@ export type Database = {
       messages: {
         Row: { id: string; conversation_id: string; sender_id: string; content: string; created_at: string };
         Insert: { conversation_id: string; sender_id: string; content: string };
+        Update: Record<string, never>;
+        Relationships: [];
+      };
+      admin_roles: {
+        Row: { user_id: string; role: StaffRole; granted_by: string | null; granted_at: string };
+        Insert: { user_id: string; role: StaffRole; granted_by?: string | null };
+        Update: { role?: StaffRole };
+        Relationships: [];
+      };
+      moderation_actions: {
+        Row: {
+          id: string;
+          moderator_id: string | null;
+          report_id: string | null;
+          target_type: ReportTargetType;
+          target_id: string;
+          action: ModerationActionType;
+          reason: string | null;
+          created_at: string;
+        };
+        Insert: never;
         Update: Record<string, never>;
         Relationships: [];
       };
@@ -496,6 +536,25 @@ export type Database = {
         Args: { p_other_user_id: string };
         Returns: string;
       };
+      is_staff: {
+        Args: { p_user_id: string };
+        Returns: boolean;
+      };
+      clear_expired_suspension: {
+        Args: { p_user_id: string };
+        Returns: void;
+      };
+      moderate: {
+        Args: {
+          p_action: ModerationActionType;
+          p_target_type: ReportTargetType;
+          p_target_id: string;
+          p_report_id?: string | null;
+          p_reason?: string | null;
+          p_duration_hours?: number;
+        };
+        Returns: void;
+      };
     };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
@@ -521,3 +580,5 @@ export type Block = Database["public"]["Tables"]["blocks"]["Row"];
 export type Mute = Database["public"]["Tables"]["mutes"]["Row"];
 export type Conversation = Database["public"]["Tables"]["conversations"]["Row"];
 export type Message = Database["public"]["Tables"]["messages"]["Row"];
+export type AdminRole = Database["public"]["Tables"]["admin_roles"]["Row"];
+export type ModerationAction = Database["public"]["Tables"]["moderation_actions"]["Row"];

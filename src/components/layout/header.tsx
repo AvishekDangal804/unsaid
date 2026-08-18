@@ -8,9 +8,10 @@ import { NotificationBell } from "./notification-bell";
 import { MessagesLink } from "./messages-link";
 import { Avatar } from "@/components/ui/avatar";
 import { buttonVariants } from "@/components/ui/button";
-import { Bookmark, Compass, Search } from "lucide-react";
+import { Bookmark, Compass, Search, ShieldCheck } from "lucide-react";
 import { getUnreadNotificationCount } from "@/lib/data/notifications";
 import { getUnreadMessageCount } from "@/lib/data/messages";
+import { getStaffRole } from "@/lib/data/admin";
 import { LogoutButton } from "./logout-button";
 
 export function HeaderSkeleton() {
@@ -31,6 +32,7 @@ export async function Header() {
   let requestCount = 0;
   let unreadCount = 0;
   let unreadMessages = 0;
+  let isStaff = false;
   if (user && profile) {
     if (profile.is_private) {
       const supabase = await createClient();
@@ -41,10 +43,14 @@ export async function Header() {
         .eq("status", "pending");
       requestCount = count ?? 0;
     }
-    [unreadCount, unreadMessages] = await Promise.all([
+    const [unread, unreadMsgs, staffRole] = await Promise.all([
       getUnreadNotificationCount(user.id),
       getUnreadMessageCount(user.id),
+      getStaffRole(user.id),
     ]);
+    unreadCount = unread;
+    unreadMessages = unreadMsgs;
+    isStaff = Boolean(staffRole);
   }
 
   return (
@@ -113,6 +119,15 @@ export async function Header() {
                 />
                 <span className="text-sm text-foreground">@{profile.username}</span>
               </Link>
+              {isStaff && (
+                <Link
+                  href="/admin"
+                  className="hidden size-9 items-center justify-center rounded-full text-muted-foreground hover:bg-surface-muted sm:flex"
+                  aria-label="Admin dashboard"
+                >
+                  <ShieldCheck className="size-4" />
+                </Link>
+              )}
               <div className="hidden sm:block">
                 <LogoutButton />
               </div>

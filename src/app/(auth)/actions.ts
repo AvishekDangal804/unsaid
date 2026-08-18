@@ -95,10 +95,32 @@ export async function login(formData: FormData): Promise<ActionResult> {
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  const { data: signInData, error } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error) {
     return { error: "Incorrect email/username or password" };
+  }
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("status, suspended_until")
+    .eq("id", signInData.user.id)
+    .maybeSingle();
+
+  if (profile?.status === "banned") {
+    await supabase.auth.signOut();
+    return { error: "This account has been banned." };
+  }
+
+  if (profile?.status === "suspended") {
+    const until = profile.suspended_until ? new Date(profile.suspended_until) : null;
+    if (until && until > new Date()) {
+      await supabase.auth.signOut();
+      return {
+        error: `This account is suspended until ${until.toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" })}.`,
+      };
+    }
+    await supabase.rpc("clear_expired_suspension", { p_user_id: signInData.user.id });
   }
 
   return { success: true };

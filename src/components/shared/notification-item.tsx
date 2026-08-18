@@ -55,6 +55,8 @@ function messageFor(item: NotificationItemType): string {
       return `${who} mentioned you in a comment`;
     case "message":
       return `${who} sent you a message`;
+    case "system":
+      return item.message ?? "New notification";
     default:
       return "New notification";
   }

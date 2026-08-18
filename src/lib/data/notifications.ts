@@ -15,6 +15,7 @@ export type NotificationItem = {
   createdAt: string;
   targetType: NotificationTargetType | null;
   targetId: string | null;
+  message: string | null;
   actors: NotificationActor[];
   extraCount: number;
 };
@@ -81,6 +82,7 @@ export async function getNotifications(userId: string, limit = 50): Promise<Noti
       createdAt: row.created_at,
       targetType: row.target_type,
       targetId: row.target_id,
+      message: row.message,
       actors: [actorFor(row)],
       extraCount: 0,
     };
