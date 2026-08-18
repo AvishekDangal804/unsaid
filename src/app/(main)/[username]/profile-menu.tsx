@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { MoreHorizontal, Flag, VolumeX, Volume2, Ban } from "lucide-react";
 import { muteUser, unmuteUser, blockUser, unblockUser } from "@/app/(main)/safety-actions";
 import { ReportDialog } from "@/components/shared/report-dialog";
+import { useDismissableMenu } from "@/lib/hooks/use-dismissable-menu";
 
 export function ProfileMenu({
   targetId,
@@ -23,17 +24,8 @@ export function ProfileMenu({
   const [muted, setMuted] = useState(initialMuted);
   const [blocked, setBlocked] = useState(initialBlocked);
   const [, startTransition] = useTransition();
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const containerRef = useDismissableMenu<HTMLDivElement>(open, setOpen, triggerRef);
 
   function handleToggleMute() {
     setOpen(false);
@@ -67,18 +59,25 @@ export function ProfileMenu({
   return (
     <div className="relative" ref={containerRef}>
       <button
+        ref={triggerRef}
         type="button"
         onClick={() => setOpen((v) => !v)}
         className="flex size-9 items-center justify-center rounded-full border border-border text-muted-foreground hover:bg-surface-muted"
         aria-label="More options"
+        aria-haspopup="menu"
+        aria-expanded={open}
       >
         <MoreHorizontal className="size-4" />
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full z-20 mt-1 w-48 overflow-hidden rounded-xl border border-border bg-surface py-1 shadow-lg">
+        <div
+          role="menu"
+          className="animate-fade-in absolute right-0 top-full z-20 mt-1 w-48 overflow-hidden rounded-xl border border-border bg-surface py-1 shadow-lg"
+        >
           <button
             type="button"
+            role="menuitem"
             onClick={() => {
               setOpen(false);
               setReportOpen(true);
@@ -90,6 +89,7 @@ export function ProfileMenu({
           </button>
           <button
             type="button"
+            role="menuitem"
             onClick={handleToggleMute}
             className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-sm text-foreground hover:bg-surface-muted"
           >
@@ -98,6 +98,7 @@ export function ProfileMenu({
           </button>
           <button
             type="button"
+            role="menuitem"
             onClick={handleToggleBlock}
             className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-sm text-danger hover:bg-surface-muted"
           >

@@ -1,25 +1,17 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { MoreHorizontal, Trash2 } from "lucide-react";
 import { deleteConversationForMe } from "../actions";
+import { useDismissableMenu } from "@/lib/hooks/use-dismissable-menu";
 
 export function ConversationMenu({ conversationId }: { conversationId: string }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [, startTransition] = useTransition();
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const containerRef = useDismissableMenu<HTMLDivElement>(open, setOpen, triggerRef);
 
   function handleDelete() {
     setOpen(false);
@@ -33,17 +25,24 @@ export function ConversationMenu({ conversationId }: { conversationId: string })
   return (
     <div className="relative" ref={containerRef}>
       <button
+        ref={triggerRef}
         type="button"
         onClick={() => setOpen((v) => !v)}
         className="flex size-8 items-center justify-center rounded-full text-muted-foreground hover:bg-surface-muted"
         aria-label="Conversation options"
+        aria-haspopup="menu"
+        aria-expanded={open}
       >
         <MoreHorizontal className="size-4" />
       </button>
       {open && (
-        <div className="absolute right-0 top-full z-20 mt-1 w-48 overflow-hidden rounded-xl border border-border bg-surface py-1 shadow-lg">
+        <div
+          role="menu"
+          className="animate-fade-in absolute right-0 top-full z-20 mt-1 w-48 overflow-hidden rounded-xl border border-border bg-surface py-1 shadow-lg"
+        >
           <button
             type="button"
+            role="menuitem"
             onClick={handleDelete}
             className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-sm text-danger hover:bg-surface-muted"
           >

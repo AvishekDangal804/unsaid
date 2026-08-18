@@ -1,10 +1,12 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { X } from "lucide-react";
 import { submitReport } from "@/app/(main)/post-actions";
 import { Button } from "@/components/ui/button";
 import type { ReportReason, ReportTargetType } from "@/types/database.types";
+
+const TITLE_ID = "report-dialog-title";
 
 const REASON_LABELS: Record<ReportReason, string> = {
   harassment: "Harassment",
@@ -33,6 +35,16 @@ export function ReportDialog({
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    closeButtonRef.current?.focus();
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") onCloseAction();
+    }
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [onCloseAction]);
 
   function handleSubmit() {
     if (!reason) return;
@@ -54,13 +66,19 @@ export function ReportDialog({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 sm:items-center">
-      <div className="w-full max-w-sm rounded-t-2xl border border-border bg-surface p-5 shadow-lg sm:rounded-2xl">
+    <div className="animate-fade-in fixed inset-0 z-50 flex items-end justify-center bg-black/40 sm:items-center">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={TITLE_ID}
+        className="animate-sheet-in w-full max-w-sm rounded-t-2xl border border-border bg-surface p-5 shadow-lg sm:rounded-2xl"
+      >
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-base font-semibold text-foreground">
+          <h2 id={TITLE_ID} className="text-base font-semibold text-foreground">
             {submitted ? "Report sent" : "Report"}
           </h2>
           <button
+            ref={closeButtonRef}
             type="button"
             onClick={onCloseAction}
             className="rounded-full p-1 text-muted-foreground hover:bg-surface-muted"

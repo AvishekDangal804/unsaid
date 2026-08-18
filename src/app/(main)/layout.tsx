@@ -38,7 +38,10 @@ export default async function MainLayout({ children }: { children: React.ReactNo
       <Suspense fallback={<HeaderSkeleton />}>
         <Header />
       </Suspense>
-      <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-4 py-6 pb-20 sm:pb-6">
+      <main
+        id="main-content"
+        className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-4 py-6 pb-20 sm:pb-6"
+      >
         {children}
       </main>
       {user && profile && (

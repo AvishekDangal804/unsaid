@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { toggleReaction } from "@/app/(main)/post-actions";
 import type { ReactionType } from "@/types/database.types";
 import { cn } from "@/lib/utils";
+import { useDismissableMenu } from "@/lib/hooks/use-dismissable-menu";
 
 const REACTION_EMOJI: Record<ReactionType, string> = {
   love: "❤️",
@@ -28,17 +29,8 @@ export function ReactionBar({
   const [myReaction, setMyReaction] = useState(initialMyReaction);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [, startTransition] = useTransition();
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setPickerOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const containerRef = useDismissableMenu<HTMLDivElement>(pickerOpen, setPickerOpen, triggerRef);
 
   const total = Object.values(counts).reduce((sum, n) => sum + (n ?? 0), 0);
 
@@ -72,23 +64,31 @@ export function ReactionBar({
   return (
     <div className="relative" ref={containerRef}>
       <button
+        ref={triggerRef}
         type="button"
         onClick={() => setPickerOpen((v) => !v)}
         className={cn(
           "flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm transition-colors hover:bg-surface-muted",
           myReaction ? "text-primary" : "text-muted-foreground",
         )}
+        aria-haspopup="menu"
+        aria-expanded={pickerOpen}
+        aria-label="React"
       >
         <span>{myReaction ? REACTION_EMOJI[myReaction] : "🤍"}</span>
         {total > 0 && <span>{total}</span>}
       </button>
 
       {pickerOpen && (
-        <div className="absolute bottom-full left-0 z-20 mb-1 flex gap-1 rounded-full border border-border bg-surface p-1.5 shadow-lg">
+        <div
+          role="menu"
+          className="animate-fade-in absolute bottom-full left-0 z-20 mb-1 flex gap-1 rounded-full border border-border bg-surface p-1.5 shadow-lg"
+        >
           {REACTION_ORDER.map((type) => (
             <button
               key={type}
               type="button"
+              role="menuitem"
               onClick={() => pick(type)}
               className={cn(
                 "flex size-8 items-center justify-center rounded-full text-lg transition-transform hover:scale-125",
