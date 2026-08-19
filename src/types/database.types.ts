@@ -37,7 +37,7 @@ export type ReportReason =
 export type ReportStatus = "pending" | "reviewed" | "actioned" | "dismissed";
 export type WhoCanMessage = "everyone" | "followers" | "no_one";
 export type ConversationStatus = "pending" | "accepted" | "declined";
-export type NotificationTargetType = "post" | "comment" | "profile" | "conversation";
+export type NotificationTargetType = "post" | "comment" | "profile" | "conversation" | "group_conversation";
 export type AccountStatus = "active" | "suspended" | "banned";
 export type StaffRole = "admin" | "moderator";
 export type ModerationActionType =
@@ -457,6 +457,24 @@ export type Database = {
         Update: Record<string, never>;
         Relationships: [];
       };
+      group_conversations: {
+        Row: { id: string; name: string | null; created_by: string; created_at: string; last_message_at: string };
+        Insert: never;
+        Update: Record<string, never>;
+        Relationships: [];
+      };
+      group_members: {
+        Row: { group_id: string; user_id: string; role: "owner" | "member"; joined_at: string };
+        Insert: never;
+        Update: Record<string, never>;
+        Relationships: [];
+      };
+      group_messages: {
+        Row: { id: string; group_id: string; sender_id: string; content: string; created_at: string };
+        Insert: { group_id: string; sender_id: string; content: string };
+        Update: Record<string, never>;
+        Relationships: [];
+      };
       admin_roles: {
         Row: { user_id: string; role: StaffRole; granted_by: string | null; granted_at: string };
         Insert: { user_id: string; role: StaffRole; granted_by?: string | null };
@@ -536,6 +554,14 @@ export type Database = {
         Args: { p_other_user_id: string };
         Returns: string;
       };
+      create_group_conversation: {
+        Args: { p_name: string | null; p_member_ids: string[] };
+        Returns: string;
+      };
+      add_group_member: {
+        Args: { p_group_id: string; p_user_id: string };
+        Returns: void;
+      };
       is_staff: {
         Args: { p_user_id: string };
         Returns: boolean;
@@ -580,5 +606,8 @@ export type Block = Database["public"]["Tables"]["blocks"]["Row"];
 export type Mute = Database["public"]["Tables"]["mutes"]["Row"];
 export type Conversation = Database["public"]["Tables"]["conversations"]["Row"];
 export type Message = Database["public"]["Tables"]["messages"]["Row"];
+export type GroupConversation = Database["public"]["Tables"]["group_conversations"]["Row"];
+export type GroupMember = Database["public"]["Tables"]["group_members"]["Row"];
+export type GroupMessage = Database["public"]["Tables"]["group_messages"]["Row"];
 export type AdminRole = Database["public"]["Tables"]["admin_roles"]["Row"];
 export type ModerationAction = Database["public"]["Tables"]["moderation_actions"]["Row"];

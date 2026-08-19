@@ -54,7 +54,7 @@ function messageFor(item: NotificationItemType): string {
     case "mention_comment":
       return `${who} mentioned you in a comment`;
     case "message":
-      return `${who} sent you a message`;
+      return item.targetType === "group_conversation" ? `${who} sent a message in a group` : `${who} sent you a message`;
     case "system":
       return item.message ?? "New notification";
     default:
@@ -69,6 +69,7 @@ function hrefFor(item: NotificationItemType): string | null {
   if (item.type === "follow_request") return "/requests";
   if (item.targetType === "post" && item.targetId) return `/post/${item.targetId}`;
   if (item.targetType === "conversation" && item.targetId) return `/messages/${item.targetId}`;
+  if (item.targetType === "group_conversation" && item.targetId) return `/messages/group/${item.targetId}`;
   return null;
 }
 
