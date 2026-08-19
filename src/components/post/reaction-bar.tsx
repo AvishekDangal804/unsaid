@@ -1,8 +1,10 @@
 "use client";
 
 import { useRef, useState, useTransition } from "react";
-import { toggleReaction } from "@/app/(main)/post-actions";
+import Link from "next/link";
+import { toggleReaction, getReactors, type Reactor } from "@/app/(main)/post-actions";
 import { useToast } from "@/components/shared/toast-provider";
+import { Avatar } from "@/components/ui/avatar";
 import type { ReactionType } from "@/types/database.types";
 import { cn } from "@/lib/utils";
 import { useDismissableMenu } from "@/lib/hooks/use-dismissable-menu";
@@ -30,9 +32,15 @@ export function ReactionBar({
   const [counts, setCounts] = useState(initialCounts);
   const [myReaction, setMyReaction] = useState(initialMyReaction);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [reactorsOpen, setReactorsOpen] = useState(false);
+  const [reactors, setReactors] = useState<Reactor[] | null>(null);
+  const [loadingReactors, setLoadingReactors] = useState(false);
   const [, startTransition] = useTransition();
   const triggerRef = useRef<HTMLButtonElement>(null);
   const containerRef = useDismissableMenu<HTMLDivElement>(pickerOpen, setPickerOpen, triggerRef);
+  const countRef = useRef<HTMLButtonElement>(null);
+  const reactorsRef = useDismissableMenu<HTMLDivElement>(reactorsOpen, setReactorsOpen, countRef);
+  const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const total = Object.values(counts).reduce((sum, n) => sum + (n ?? 0), 0);
 
@@ -53,6 +61,7 @@ export function ReactionBar({
       setMyReaction(type);
     }
     setCounts(nextCounts);
+    setReactors(null);
 
     startTransition(async () => {
       const result = await toggleReaction(target, type);
@@ -64,8 +73,31 @@ export function ReactionBar({
     });
   }
 
+  function loadReactors() {
+    if (reactors !== null || loadingReactors) return;
+    setLoadingReactors(true);
+    getReactors(target)
+      .then(setReactors)
+      .finally(() => setLoadingReactors(false));
+  }
+
+  function handleMouseEnter() {
+    if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+    setReactorsOpen(true);
+    loadReactors();
+  }
+
+  function handleMouseLeave() {
+    hoverTimeoutRef.current = setTimeout(() => setReactorsOpen(false), 150);
+  }
+
+  function handleTap() {
+    setReactorsOpen((v) => !v);
+    loadReactors();
+  }
+
   return (
-    <div className="relative" ref={containerRef}>
+    <div className="relative flex items-center" ref={containerRef}>
       <button
         ref={triggerRef}
         type="button"
@@ -79,8 +111,54 @@ export function ReactionBar({
         aria-label="React"
       >
         <span>{myReaction ? REACTION_EMOJI[myReaction] : "🤍"}</span>
-        {total > 0 && <span>{total}</span>}
       </button>
+
+      {total > 0 && (
+        <div className="relative" ref={reactorsRef}>
+          <button
+            ref={countRef}
+            type="button"
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
+            onClick={handleTap}
+            className="-ml-1 rounded-full px-1.5 py-1.5 text-sm text-muted-foreground hover:bg-surface-muted"
+            aria-haspopup="true"
+            aria-expanded={reactorsOpen}
+            aria-label={`See who reacted, ${total} total`}
+          >
+            {total}
+          </button>
+
+          {reactorsOpen && (
+            <div
+              onMouseEnter={handleMouseEnter}
+              onMouseLeave={handleMouseLeave}
+              className="animate-fade-in absolute bottom-full left-0 z-20 mb-1 max-h-64 w-56 overflow-y-auto rounded-xl border border-border bg-surface py-1.5 shadow-lg"
+            >
+              {loadingReactors && !reactors ? (
+                <p className="px-3 py-2 text-xs text-muted-foreground">Loading...</p>
+              ) : reactors && reactors.length > 0 ? (
+                reactors.slice(0, 20).map((r, i) => (
+                  <Link
+                    key={`${r.username}-${i}`}
+                    href={`/${r.username}`}
+                    className="flex items-center gap-2 px-3 py-1.5 text-sm text-foreground hover:bg-surface-muted"
+                  >
+                    <Avatar src={r.avatarUrl} name={r.displayName ?? r.username} size={24} />
+                    <span className="truncate">{r.displayName || r.username}</span>
+                    <span className="ml-auto shrink-0">{REACTION_EMOJI[r.type]}</span>
+                  </Link>
+                ))
+              ) : (
+                <p className="px-3 py-2 text-xs text-muted-foreground">No reactions yet</p>
+              )}
+              {reactors && reactors.length > 20 && (
+                <p className="px-3 py-1.5 text-xs text-muted-foreground">+{reactors.length - 20} more</p>
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       {pickerOpen && (
         <div

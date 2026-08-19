@@ -17,6 +17,50 @@ async function requireUser() {
   return { supabase, user };
 }
 
+export type Reactor = {
+  username: string;
+  displayName: string | null;
+  avatarUrl: string | null;
+  type: ReactionType;
+};
+
+// Reactions are publicly readable (see RLS policy), and — unlike posts/
+// comments — have no anonymity option, so no identity masking is needed here.
+export async function getReactors(target: { postId: string } | { commentId: string }): Promise<Reactor[]> {
+  const supabase = await createClient();
+  const column = "postId" in target ? "post_id" : "comment_id";
+  const targetId = "postId" in target ? target.postId : target.commentId;
+
+  const { data: reactions } = await supabase
+    .from("reactions")
+    .select("user_id, type, created_at")
+    .eq(column, targetId)
+    .order("created_at", { ascending: false });
+
+  if (!reactions || reactions.length === 0) return [];
+
+  const userIds = reactions.map((r) => r.user_id);
+  const { data: profiles } = await supabase
+    .from("profiles")
+    .select("id, username, display_name, avatar_url")
+    .in("id", userIds);
+
+  const profileMap = new Map((profiles ?? []).map((p) => [p.id, p]));
+
+  return reactions
+    .map((r) => {
+      const profile = profileMap.get(r.user_id);
+      if (!profile) return null;
+      return {
+        username: profile.username,
+        displayName: profile.display_name,
+        avatarUrl: profile.avatar_url,
+        type: r.type as ReactionType,
+      };
+    })
+    .filter((r): r is Reactor => r !== null);
+}
+
 export async function toggleReaction(
   target: { postId: string } | { commentId: string },
   type: ReactionType,
