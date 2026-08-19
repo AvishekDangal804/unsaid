@@ -30,18 +30,18 @@ export const REPORT_REASONS = [
 export const REPORT_TARGET_TYPES = ["post", "comment", "user", "message", "community"] as const;
 
 const CONTENT_LIMITS: Record<(typeof POST_TYPES)[number], number> = {
-  post: 2000,
-  confession: 1000,
-  story: 5000,
-  question: 280,
+  post: 20000,
+  confession: 20000,
+  story: 20000,
+  question: 20000,
   poll: 200,
-  photo: 500,
+  photo: 20000,
 };
 
 export const createPostSchema = z
   .object({
     type: z.enum(POST_TYPES),
-    content: z.string().trim().max(5000).optional(),
+    content: z.string().trim().max(20000).optional(),
     categoryId: z.string().uuid().optional().or(z.literal("")),
     mood: z.enum(MOODS).optional().or(z.literal("")),
     isAnonymous: z.boolean(),
