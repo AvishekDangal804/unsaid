@@ -7,6 +7,7 @@ import { login } from "../actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { FacebookLoginButton } from "@/components/shared/facebook-login-button";
 
 export function LoginForm() {
   const router = useRouter();
@@ -68,6 +69,14 @@ export function LoginForm() {
           {pending ? "Logging in..." : "Log in"}
         </Button>
       </form>
+
+      <div className="my-4 flex items-center gap-3">
+        <div className="h-px flex-1 bg-border" />
+        <span className="text-xs text-muted-foreground">or</span>
+        <div className="h-px flex-1 bg-border" />
+      </div>
+
+      <FacebookLoginButton />
 
       <p className="mt-6 text-center text-sm text-muted-foreground">
         New to UNSAID?{" "}

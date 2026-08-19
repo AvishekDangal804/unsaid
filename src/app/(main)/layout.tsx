@@ -27,6 +27,10 @@ export default async function MainLayout({ children }: { children: React.ReactNo
     redirect("/suspended");
   }
 
+  if (profile?.oauth_setup_pending) {
+    redirect("/finish-signup");
+  }
+
   if (profile && (!profile.country || !profile.education_level || !profile.institution_id)) {
     redirect("/onboarding");
   }

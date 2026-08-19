@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-const usernameSchema = z
+export const usernameSchema = z
   .string()
   .trim()
   .min(3, "Username must be at least 3 characters")
@@ -12,7 +12,7 @@ const passwordSchema = z
   .min(8, "Password must be at least 8 characters")
   .max(72, "Password is too long");
 
-function isAtLeast13(dob: string) {
+export function isAtLeast13(dob: string) {
   const date = new Date(dob);
   if (Number.isNaN(date.getTime())) return false;
   const today = new Date();
@@ -34,6 +34,15 @@ export const signupSchema = z.object({
     .refine(isAtLeast13, "You must be at least 13 years old to join UNSAID"),
 });
 export type SignupInput = z.infer<typeof signupSchema>;
+
+export const finishSignupSchema = z.object({
+  username: usernameSchema,
+  dateOfBirth: z
+    .string()
+    .min(1, "Date of birth is required")
+    .refine(isAtLeast13, "You must be at least 13 years old to join UNSAID"),
+});
+export type FinishSignupInput = z.infer<typeof finishSignupSchema>;
 
 export const loginSchema = z.object({
   identifier: z.string().min(1, "Enter your email or username"),

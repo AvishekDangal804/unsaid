@@ -82,6 +82,7 @@ export type Database = {
           status: AccountStatus;
           suspended_until: string | null;
           is_restricted: boolean;
+          oauth_setup_pending: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -107,6 +108,7 @@ export type Database = {
           education_level?: EducationLevel | null;
           institution_id?: string | null;
           who_can_message?: WhoCanMessage;
+          oauth_setup_pending?: boolean;
         };
         Relationships: [];
       };
