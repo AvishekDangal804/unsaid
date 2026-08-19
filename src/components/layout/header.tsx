@@ -71,7 +71,7 @@ export async function Header() {
         <div className="flex items-center gap-1.5">
           <Link
             href="/search"
-            className="flex size-9 items-center justify-center rounded-full text-muted-foreground hover:bg-surface-muted sm:hidden"
+            className="flex size-9 items-center justify-center rounded-full text-muted-foreground hover:bg-surface-muted"
             aria-label="Search"
           >
             <Search className="size-4" />

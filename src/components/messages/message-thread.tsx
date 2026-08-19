@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import {
@@ -12,6 +13,7 @@ import {
 } from "@/app/(main)/messages/actions";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { ConversationMenu } from "@/app/(main)/messages/[id]/conversation-menu";
 import { cn } from "@/lib/utils";
 import type { Message, ConversationStatus } from "@/types/database.types";
 
@@ -163,17 +165,20 @@ export function MessageThread({
   const canChat = status !== "declined";
 
   return (
-    <div className="flex h-[calc(100vh-8rem)] flex-col sm:h-[calc(100vh-5rem)]">
-      <div className="flex items-center gap-3 border-b border-border pb-3">
-        <Avatar src={otherUser.avatar_url} name={otherUser.display_name ?? otherUser.username} size={40} />
-        <div>
-          <p className="text-sm font-medium text-foreground">
-            {otherUser.display_name || otherUser.username}
-          </p>
-          <p className="text-xs text-muted-foreground">
-            {isOnline ? "Online" : `@${otherUser.username}`}
-          </p>
-        </div>
+    <div className="flex h-[calc(100dvh-10rem)] flex-col sm:h-[calc(100dvh-6.5rem)]">
+      <div className="flex items-center justify-between gap-3 border-b border-border pb-3">
+        <Link href={`/${otherUser.username}`} className="flex min-w-0 items-center gap-3">
+          <Avatar src={otherUser.avatar_url} name={otherUser.display_name ?? otherUser.username} size={40} />
+          <div className="min-w-0">
+            <p className="truncate text-sm font-medium text-foreground">
+              {otherUser.display_name || otherUser.username}
+            </p>
+            <p className="truncate text-xs text-muted-foreground">
+              {isOnline ? "Online" : `@${otherUser.username}`}
+            </p>
+          </div>
+        </Link>
+        <ConversationMenu conversationId={conversationId} />
       </div>
 
       {status === "pending" && !isInitiator && (

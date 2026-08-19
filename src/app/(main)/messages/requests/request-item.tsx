@@ -47,15 +47,17 @@ export function MessageRequestItem({ conversation }: { conversation: Conversatio
 
   return (
     <div className="flex items-center gap-3 rounded-xl border border-border bg-surface px-4 py-3">
-      <Avatar src={otherUser.avatarUrl} name={otherUser.displayName ?? otherUser.username} size={44} />
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium text-foreground">
-          {otherUser.displayName || otherUser.username}
-        </p>
-        <p className="truncate text-xs text-muted-foreground">
-          {conversation.lastMessagePreview ?? "Wants to message you"}
-        </p>
-      </div>
+      <Link href={`/${otherUser.username}`} className="flex min-w-0 flex-1 items-center gap-3">
+        <Avatar src={otherUser.avatarUrl} name={otherUser.displayName ?? otherUser.username} size={44} />
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-medium text-foreground">
+            {otherUser.displayName || otherUser.username}
+          </p>
+          <p className="truncate text-xs text-muted-foreground">
+            {conversation.lastMessagePreview ?? "Wants to message you"}
+          </p>
+        </div>
+      </Link>
       <div className="flex gap-2">
         <Button size="sm" loading={pending} onClick={handleAccept}>
           Accept
