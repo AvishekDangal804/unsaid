@@ -2,6 +2,7 @@
 
 import { useRef, useState, useTransition } from "react";
 import { toggleReaction } from "@/app/(main)/post-actions";
+import { useToast } from "@/components/shared/toast-provider";
 import type { ReactionType } from "@/types/database.types";
 import { cn } from "@/lib/utils";
 import { useDismissableMenu } from "@/lib/hooks/use-dismissable-menu";
@@ -25,6 +26,7 @@ export function ReactionBar({
   initialCounts: Partial<Record<ReactionType, number>>;
   initialMyReaction: ReactionType | null;
 }) {
+  const { showToast } = useToast();
   const [counts, setCounts] = useState(initialCounts);
   const [myReaction, setMyReaction] = useState(initialMyReaction);
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -57,6 +59,7 @@ export function ReactionBar({
       if ("error" in result) {
         setCounts(prevCounts);
         setMyReaction(prevMine);
+        showToast(result.error, "error");
       }
     });
   }

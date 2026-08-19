@@ -10,6 +10,7 @@ import { PostImageGrid } from "./post-image-grid";
 import { PostMenu } from "./post-menu";
 import { PostContent } from "./post-content";
 import { toggleRepost } from "@/app/(main)/post-actions";
+import { useToast } from "@/components/shared/toast-provider";
 import { cn } from "@/lib/utils";
 import { MOOD_META } from "@/lib/moods";
 import type { FeedPost } from "@/lib/data/posts";
@@ -36,6 +37,7 @@ function timeAgo(iso: string) {
 }
 
 export function PostCard({ post, currentUserId }: { post: FeedPost; currentUserId: string | null }) {
+  const { showToast } = useToast();
   const [warningDismissed, setWarningDismissed] = useState(false);
   const [reposted, setReposted] = useState(post.isReposted);
   const [repostCount, setRepostCount] = useState(post.repostCount);
@@ -47,6 +49,10 @@ export function PostCard({ post, currentUserId }: { post: FeedPost; currentUserI
   const showWarning = post.contentWarning && !warningDismissed;
 
   function handleRepost() {
+    if (!currentUserId) {
+      showToast("Log in to repost", "error");
+      return;
+    }
     const prevReposted = reposted;
     const prevCount = repostCount;
     setReposted(!prevReposted);
@@ -55,6 +61,7 @@ export function PostCard({ post, currentUserId }: { post: FeedPost; currentUserI
       if ("error" in result) {
         setReposted(prevReposted);
         setRepostCount(prevCount);
+        showToast(result.error, "error");
       }
     });
   }

@@ -40,7 +40,10 @@ export function PostMenu({
     setSaved(!prev);
     startTransition(async () => {
       const result = await toggleSave(postId);
-      if ("error" in result) setSaved(prev);
+      if ("error" in result) {
+        setSaved(prev);
+        showToast(result.error, "error");
+      }
     });
   }
 

@@ -30,23 +30,37 @@ export default async function HomePage() {
     );
   }
 
+  const { posts, nextCursor } = await getFeedPosts({ scope: "latest", userId: null });
+
   return (
-    <div className="flex flex-1 flex-col items-center justify-center gap-6 py-24 text-center">
-      <div className="space-y-2">
-        <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
-          Every feeling has a story.
-        </h1>
-        <p className="mx-auto max-w-md text-base text-muted-foreground">
-          Share instant thoughts, confessions, and stories — with your name, or anonymously.
-        </p>
+    <div>
+      <div className="flex flex-col items-center gap-4 rounded-2xl border border-border bg-surface px-6 py-8 text-center">
+        <div className="space-y-2">
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+            Every feeling has a story.
+          </h1>
+          <p className="mx-auto max-w-md text-sm text-muted-foreground">
+            Share instant thoughts, confessions, and stories — with your name, or anonymously.
+          </p>
+        </div>
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <Link href="/signup" className={buttonVariants({ size: "lg" })}>
+            Get started
+          </Link>
+          <Link href="/login" className={buttonVariants({ variant: "outline", size: "lg" })}>
+            Log in
+          </Link>
+        </div>
       </div>
-      <div className="flex flex-col gap-3 sm:flex-row">
-        <Link href="/signup" className={buttonVariants({ size: "lg" })}>
-          Get started
-        </Link>
-        <Link href="/login" className={buttonVariants({ variant: "outline", size: "lg" })}>
-          Log in
-        </Link>
+
+      <div className="mt-6">
+        <Feed
+          initialPosts={posts}
+          initialCursor={nextCursor}
+          initialScope="latest"
+          currentUserId={null}
+          showTabs={false}
+        />
       </div>
     </div>
   );
