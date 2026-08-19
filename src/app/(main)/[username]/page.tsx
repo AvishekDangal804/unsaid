@@ -114,14 +114,14 @@ export default async function ProfilePage({ params }: PageProps<"/[username]">) 
           )}
 
           <div className="mt-3 flex justify-center gap-4 text-sm sm:justify-start">
-            <span>
+            <Link href={`/${profile.username}/followers`} className="hover:underline">
               <strong className="text-foreground">{followerCount ?? 0}</strong>{" "}
               <span className="text-muted-foreground">followers</span>
-            </span>
-            <span>
+            </Link>
+            <Link href={`/${profile.username}/following`} className="hover:underline">
               <strong className="text-foreground">{followingCount ?? 0}</strong>{" "}
               <span className="text-muted-foreground">following</span>
-            </span>
+            </Link>
           </div>
 
           <div className="mt-4 flex justify-center gap-2 sm:justify-start">
