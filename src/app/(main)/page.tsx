@@ -14,7 +14,7 @@ export default async function HomePage() {
     const profileIncomplete =
       profile && !profile.display_name && !profile.bio && !profile.avatar_url;
 
-    const { posts, nextCursor } = await getFeedPosts({ scope: "following", userId: user.id });
+    const { posts, nextCursor } = await getFeedPosts({ scope: "latest", userId: user.id });
 
     return (
       <div>
@@ -22,9 +22,9 @@ export default async function HomePage() {
         <Feed
           initialPosts={posts}
           initialCursor={nextCursor}
-          initialScope="following"
+          initialScope="latest"
           currentUserId={user.id}
-          showTabs
+          showTabs={false}
         />
       </div>
     );
