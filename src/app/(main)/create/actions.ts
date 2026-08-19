@@ -84,11 +84,16 @@ export async function createPost(formData: FormData): Promise<ActionResult> {
 
   if ((data.type === "photo" || data.type === "post") && data.mediaUrls && data.mediaUrls.length > 0) {
     const { error: mediaError } = await supabase.from("post_media").insert(
-      data.mediaUrls.map((url, position) => ({ post_id: post.id, url, position })),
+      data.mediaUrls.map((url, position) => ({
+        post_id: post.id,
+        url,
+        position,
+        media_type: /\.(mp4|webm|mov)$/i.test(url) ? "video" : "image",
+      })),
     );
     if (mediaError) {
       await supabase.from("posts").delete().eq("id", post.id);
-      return { error: "Something went wrong attaching your photo. Try again." };
+      return { error: "Something went wrong attaching your media. Try again." };
     }
   }
 

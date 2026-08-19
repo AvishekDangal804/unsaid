@@ -102,3 +102,7 @@ export type ReportInput = z.infer<typeof reportSchema>;
 
 export const MAX_POST_MEDIA_BYTES = 8 * 1024 * 1024;
 export const ALLOWED_POST_MEDIA_TYPES = ["image/jpeg", "image/png", "image/webp"];
+
+export const MAX_POST_VIDEO_BYTES = 150 * 1024 * 1024;
+export const MAX_POST_VIDEO_SECONDS = 180;
+export const ALLOWED_POST_VIDEO_TYPES = ["video/mp4", "video/webm", "video/quicktime"];

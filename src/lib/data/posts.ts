@@ -20,7 +20,7 @@ export type FeedPost = {
     displayName: string | null;
     avatarUrl: string | null;
   } | null;
-  media: { url: string; width: number | null; height: number | null }[];
+  media: { url: string; width: number | null; height: number | null; type: "image" | "video" }[];
   pollOptions: { id: string; text: string; votes: number }[];
   myPollVote: string | null;
   totalPollVotes: number;
@@ -92,7 +92,7 @@ export async function enrichPosts(
     mediaPostIds.length > 0
       ? supabase
           .from("post_media")
-          .select("post_id, url, width, height, position")
+          .select("post_id, url, width, height, position, media_type")
           .in("post_id", mediaPostIds)
           .order("position")
       : Promise.resolve({ data: [] }),
@@ -135,7 +135,7 @@ export async function enrichPosts(
   const mediaByPost = new Map<string, FeedPost["media"]>();
   for (const m of mediaResult.data ?? []) {
     const list = mediaByPost.get(m.post_id) ?? [];
-    list.push({ url: m.url, width: m.width, height: m.height });
+    list.push({ url: m.url, width: m.width, height: m.height, type: m.media_type });
     mediaByPost.set(m.post_id, list);
   }
 

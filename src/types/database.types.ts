@@ -227,6 +227,8 @@ export type Database = {
           width: number | null;
           height: number | null;
           position: number;
+          media_type: "image" | "video";
+          duration_seconds: number | null;
           created_at: string;
         };
         Insert: {
@@ -235,6 +237,8 @@ export type Database = {
           width?: number | null;
           height?: number | null;
           position?: number;
+          media_type?: "image" | "video";
+          duration_seconds?: number | null;
         };
         Update: { position?: number };
         Relationships: [];
